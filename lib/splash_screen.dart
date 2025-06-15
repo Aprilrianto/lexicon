@@ -4,7 +4,7 @@ import 'dart:async';
 class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    Timer(Duration(seconds: 2), () {
+    Timer(Duration(seconds: 6), () {
       Navigator.pushReplacementNamed(context, '/onboarding');
     });
 

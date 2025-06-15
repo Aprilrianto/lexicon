@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_page.dart'; // Pastikan path ini sesuai dengan struktur project kamu
 
 class OnboardingScreen extends StatefulWidget {
   @override
@@ -12,15 +13,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> _pages = [
     {
       'title': 'Semua Novel Favorit dalam Genggaman',
-      'desc': 'Nikmati pengalaman membaca yang menyenangkan dengan akses ke ribuan novel pilihan. Baca kapan pun kamu dan di manapun kamu mau.',
+      'desc':
+          'Nikmati pengalaman membaca yang menyenangkan dengan akses ke ribuan novel pilihan. Baca kapan pun kamu dan di manapun kamu mau.',
     },
     {
       'title': 'Temukan dunia baru dalam setiap genre',
-      'desc': 'Temukan cerita yang sesuai dengan seleramu! Dari kisah romantis, petualangan fantasi, hingga misteri yang menegangkan semua genre favorit ada di sini.',
+      'desc':
+          'Temukan cerita yang sesuai dengan seleramu! Dari kisah romantis, petualangan fantasi, hingga misteri yang menegangkan semua genre favorit ada di sini.',
     },
     {
       'title': 'Simpan bacaan favoritmu dengan satu klik',
-      'desc': 'Simpan semua bacaan favoritmu dengan mudah dalam satu koleksi pribadi. Klik sekali untuk menyimpan, akses kapan pun kamu mau tanpa repot mencari lagi!',
+      'desc':
+          'Simpan semua bacaan favoritmu dengan mudah dalam satu koleksi pribadi. Klik sekali untuk menyimpan, akses kapan pun kamu mau tanpa repot mencari lagi!',
     },
   ];
 
@@ -66,21 +70,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   onPressed: () {
                     if (_currentIndex < _pages.length - 1) {
                       _controller.nextPage(
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.easeInOut);
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
                     } else {
-                      // Navigasi ke halaman berikutnya
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginPage()),
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigo,
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: Text("Selanjutnya"),
+                  child: Text(
+                    _currentIndex < _pages.length - 1 ? 'Selanjutnya' : 'Mulai',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
                 ),
               ],
             ),
