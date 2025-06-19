@@ -14,7 +14,7 @@ class _splashScreenState extends State<SplashScreen> {
       // Navigasi ke halaman utama setelah delay
       Navigator.pushReplacementNamed(
         context,
-        '/home',
+        '/home_screen',
       ); // Ganti dengan halaman tujuan yang sesuai
     });
   }
@@ -26,13 +26,9 @@ class _splashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Ganti dengan logo atau gambar splash screen
-            Icon(Icons.book, size: 100, color: Colors.yellow),
-            SizedBox(height: 24),
-            // Nama aplikasi
-            Text(
-              'Lexicon App',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            // Logo aplikasi
+            Center(
+              child: Image.asset('assets/logo.png', width: 200, height: 200),
             ),
             SizedBox(height: 10),
             // Loding Indicator
