@@ -9,9 +9,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
     url: 'https://dwdmlxchudptzhurnker.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3ZG1seGNodWRwdHpodXJua2VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNDkxOTAsImV4cCI6MjA2NTgyNTE5MH0.0X_m0hQipNP2CBzJ3hWeZEDBKHcvTMZe8GD47RR85tM',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3ZG1seGNodWRwdHpodXJua2VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNDkxOTAsImV4cCI6MjA2NTgyNTE5MH0.0X_m0hQipNP2CBzJ3hWeZEDBKHcvTMZe8GD47RR85tM',
   );
-  runApp(const LexiconApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -19,8 +20,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final session = Supabase.instance.client.auth.currentSession;
     return MaterialApp(
-      routes: {'/login_screen': (context) => const LoginPage()},
       debugShowCheckedModeBanner: false,
       title: 'Lexicon Novel',
       theme: ThemeData(
@@ -33,7 +34,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeScreen(),
-        '/profile': (context) => const ProfileScreen(), // ✅ Tambahkan route profile
+        '/profile':
+            (context) => const ProfileScreen(), // ✅ Tambahkan route profile
       },
     );
   }
