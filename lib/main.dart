@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/profile_screen.dart'; // Tambahkan ini
+import 'screens/profile_screen.dart';
+import './screens/EditProfileScreen.dart'; // ✅ Tambahkan ini juga
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +36,8 @@ class LexiconApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeScreen(),
-        '/profile': (context) => const ProfileScreen(), // ✅ Tambahkan route profile
+        '/profile': (context) => const ProfileScreen(), // ✅ Profile page
+        '/edit_profile': (context) => const EditProfileScreen(), // ✅ Tambahan halaman edit
       },
     );
   }
