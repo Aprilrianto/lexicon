@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // untuk kIsWeb
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/strorage_service.dart'; // ✅ perbaikan typo
+import '../services/strorage_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,6 +14,8 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _bioController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   XFile? _avatar;
@@ -28,7 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _register() async {
     try {
       final res = await Supabase.instance.client.auth.signUp(
-        email: _emailController.text,
+        email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
@@ -42,7 +44,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         await Supabase.instance.client.from('profiles').insert({
           'id': user.id,
-          'full_name': _nameController.text,
+          'full_name': _nameController.text.trim(),
+          'username': _usernameController.text.trim(),
+          'bio': _bioController.text.trim(),
           'avatar_url': avatarUrl,
         });
 
@@ -72,6 +76,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               decoration: const InputDecoration(labelText: 'Full Name'),
             ),
             TextField(
+              controller: _usernameController,
+              decoration: const InputDecoration(labelText: 'Username'),
+            ),
+            TextField(
+              controller: _bioController,
+              decoration: const InputDecoration(labelText: 'Bio'),
+              maxLines: 2,
+            ),
+            TextField(
               controller: _emailController,
               decoration: const InputDecoration(labelText: 'Email'),
             ),
@@ -87,12 +100,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               label: const Text('Pick Avatar'),
             ),
             const SizedBox(height: 10),
-
             if (_avatar != null)
               kIsWeb
                   ? Image.network(_avatar!.path, height: 100)
                   : Image.file(File(_avatar!.path), height: 100),
-
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _register,
