@@ -1,58 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/profile_screen.dart'; // Tambahkan ini
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Supabase.initialize(
+    url: 'https://dwdmlxchudptzhurnker.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3ZG1seGNodWRwdHpodXJua2VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyNDkxOTAsImV4cCI6MjA2NTgyNTE5MH0.0X_m0hQipNP2CBzJ3hWeZEDBKHcvTMZe8GD47RR85tM',
+  );
+  runApp(const LexiconApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class LexiconApp extends StatelessWidget {
+  const LexiconApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Login Demo', home: const LoginPage());
-  }
-}
+    final session = Supabase.instance.client.auth.currentSession;
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
-
-  @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                // TODO: Implement login logic
-              },
-              child: const Text('Login'),
-            ),
-          ],
-        ),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Lexicon Novel',
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        scaffoldBackgroundColor: Colors.white,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      initialRoute: session != null ? '/home' : '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/profile': (context) => const ProfileScreen(), // ✅ Tambahkan route profile
+      },
     );
   }
 }
