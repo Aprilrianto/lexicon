@@ -14,7 +14,7 @@ class _splashScreenState extends State<SplashScreen> {
       // Navigasi ke halaman utama setelah delay
       Navigator.pushReplacementNamed(
         context,
-        '/home_screen',
+        '/login_screen',
       ); // Ganti dengan halaman tujuan yang sesuai
     });
   }

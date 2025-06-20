@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexiconn/screens/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -9,7 +10,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Login Demo', home: const LoginPage());
+    return MaterialApp(
+      routes: {'/login_screen': (context) => const LoginPage()},
+      debugShowCheckedModeBanner: false,
+      title: 'Login Demo',
+      home: SplashScreen(),
+    );
   }
 }
 
