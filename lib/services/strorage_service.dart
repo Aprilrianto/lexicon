@@ -22,9 +22,15 @@ class StorageService {
 
       await Supabase.instance.client.storage
           .from('avatars')
-          .uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: true));
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
 
-      final url = Supabase.instance.client.storage.from('avatars').getPublicUrl(path);
+      final url = Supabase.instance.client.storage
+          .from('avatars')
+          .getPublicUrl(path);
       return url;
     } catch (e) {
       print('Upload avatar error: $e');
@@ -47,9 +53,15 @@ class StorageService {
 
       await Supabase.instance.client.storage
           .from('cover')
-          .uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: true));
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
 
-      final url = Supabase.instance.client.storage.from('cover').getPublicUrl(path);
+      final url = Supabase.instance.client.storage
+          .from('cover')
+          .getPublicUrl(path);
       return url;
     } catch (e) {
       print('Upload cover error: $e');
