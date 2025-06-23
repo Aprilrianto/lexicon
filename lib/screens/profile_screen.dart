@@ -1,4 +1,3 @@
-// Halaman Profile (hanya untuk menampilkan profil & navigasi ke Edit)
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'EditProfileScreen.dart';
@@ -12,24 +11,27 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final user = Supabase.instance.client.auth.currentUser;
-  Map<String, dynamic>? _profile;
-  bool _loading = true;
+  late Future<Map<String, dynamic>> _profileFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    _profileFuture = _loadProfile();
   }
 
-  Future<void> _loadProfile() async {
+  Future<Map<String, dynamic>> _loadProfile() async {
     final data = await Supabase.instance.client
         .from('profiles')
         .select()
         .eq('id', user!.id)
         .single();
+
+    return data;
+  }
+
+  void _refreshProfile() {
     setState(() {
-      _profile = data;
-      _loading = false;
+      _profileFuture = _loadProfile();
     });
   }
 
@@ -37,25 +39,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Profil")),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError || !snapshot.hasData) {
+            return const Center(child: Text("Gagal memuat profil."));
+          }
+
+          final profile = snapshot.data!;
+          final avatarUrl = profile["avatar_url"] ?? '';
+          final fullName = profile["full_name"] ?? 'Tanpa Nama';
+          final username = profile["username"] ?? '';
+          final bio = profile["bio"] ?? 'Belum ada bio.';
+
+          return RefreshIndicator(
+            onRefresh: () async => _refreshProfile(),
+            child: ListView(
               padding: const EdgeInsets.all(24),
               children: [
                 Center(
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundImage: _profile!["avatar_url"] != null && _profile!["avatar_url"].toString().isNotEmpty
-                        ? NetworkImage(_profile!["avatar_url"]) as ImageProvider
+                    backgroundImage: avatarUrl.isNotEmpty
+                        ? NetworkImage(avatarUrl)
                         : null,
-                    child: (_profile!["avatar_url"] == null || _profile!["avatar_url"].isEmpty)
+                    child: avatarUrl.isEmpty
                         ? const Icon(Icons.person, size: 50)
                         : null,
                   ),
                 ),
                 const SizedBox(height: 12),
-                Center(child: Text(_profile!["full_name"] ?? '-', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-                Center(child: Text('@${_profile!["username"] ?? ''}', style: const TextStyle(color: Colors.grey))),
+                Center(
+                  child: Text(
+                    fullName,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                if (username.isNotEmpty)
+                  Center(
+                    child: Text(
+                      '@$username',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ),
                 const SizedBox(height: 20),
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -67,22 +97,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const Divider(height: 40),
                 const Text("Tentang Kamu", style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
-                  _profile!["bio"] ?? 'Belum ada bio.',
+                  bio,
                   style: const TextStyle(color: Colors.black87),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    final result = await Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const EditProfileScreen()),
                     );
+                    if (result == true) {
+                      _refreshProfile();
+                    }
                   },
                   icon: const Icon(Icons.edit),
                   label: const Text("Edit Profil"),
-                )
+                ),
               ],
             ),
+          );
+        },
+      ),
     );
   }
 }
