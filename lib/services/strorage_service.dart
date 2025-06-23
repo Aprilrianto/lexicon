@@ -13,10 +13,8 @@ class StorageService {
       Uint8List bytes;
 
       if (kIsWeb) {
-        // Web: file adalah XFile
         bytes = await (file as XFile).readAsBytes();
       } else {
-        // Mobile: file adalah File
         bytes = await (file as File).readAsBytes();
       }
 
@@ -28,10 +26,14 @@ class StorageService {
             fileOptions: const FileOptions(upsert: true),
           );
 
+      // Dapatkan URL dan tambahkan query param timestamp untuk hindari cache
       final url = Supabase.instance.client.storage
           .from('avatars')
           .getPublicUrl(path);
-      return url;
+
+      final urlWithTimestamp = '$url?v=${DateTime.now().millisecondsSinceEpoch}';
+
+      return urlWithTimestamp;
     } catch (e) {
       print('Upload avatar error: $e');
       return '';
@@ -62,7 +64,10 @@ class StorageService {
       final url = Supabase.instance.client.storage
           .from('cover')
           .getPublicUrl(path);
-      return url;
+
+      final urlWithTimestamp = '$url?v=${DateTime.now().millisecondsSinceEpoch}';
+
+      return urlWithTimestamp;
     } catch (e) {
       print('Upload cover error: $e');
       return '';
