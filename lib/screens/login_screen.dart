@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {},
-                      icon: Image.asset('assets/facebook_icon.png', height: 20),
+                      icon: Image.asset('assets/facebook.png', height: 20),
                       label: const Text('Facebook'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
