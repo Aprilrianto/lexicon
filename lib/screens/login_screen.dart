@@ -116,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {},
-                      icon: Image.asset('assets/google_icon.png', height: 20),
+                      icon: Image.asset('assets/google.png', height: 20),
                       label: const Text('Google'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
