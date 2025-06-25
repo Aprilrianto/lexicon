@@ -28,9 +28,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> fetchCategories() async {
     try {
-      final response = await Supabase.instance.client.from('categories').select();
+      final response =
+          await Supabase.instance.client.from('categories').select();
       setState(() {
-        categories = (response as List).map((e) => Category.fromMap(e)).toList();
+        categories =
+            (response as List).map((e) => Category.fromMap(e)).toList();
         isLoadingCategories = false;
       });
     } catch (e) {
@@ -109,100 +111,120 @@ class _HomeScreenState extends State<HomeScreen> {
             // Kategori
             SizedBox(
               height: 60,
-              child: isLoadingCategories
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: categories.length,
-                      itemBuilder: (context, index) {
-                        final category = categories[index];
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              searchQuery = category.name;
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 10),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.deepPurple.shade50,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.deepPurple.shade100),
-                            ),
-                            child: Row(
-                              children: [
-                                if (category.iconUrl != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 6),
-                                    child: Image.network(category.iconUrl!, width: 20, height: 20),
-                                  ),
-                                Text(category.name,
+              child:
+                  isLoadingCategories
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: categories.length,
+                        itemBuilder: (context, index) {
+                          final category = categories[index];
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                searchQuery = category.name;
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.deepPurple.shade50,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.deepPurple.shade100,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  if (category.iconUrl != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 6),
+                                      child: Image.network(
+                                        category.iconUrl!,
+                                        width: 20,
+                                        height: 20,
+                                      ),
+                                    ),
+                                  Text(
+                                    category.name,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                    )),
-                              ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
             ),
 
             const SizedBox(height: 12),
 
             // List Novel
             Expanded(
-              child: isLoadingNovels
-                  ? const Center(child: CircularProgressIndicator())
-                  : GridView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.6,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                      ),
-                      itemCount: filteredNovels.length,
-                      itemBuilder: (context, index) {
-                        final novel = filteredNovels[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => DetailScreen(novel: novel)),
-                            );
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  novel.coverUrl,
-                                  height: 160,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
+              child:
+                  isLoadingNovels
+                      ? const Center(child: CircularProgressIndicator())
+                      : GridView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.6,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                        itemCount: filteredNovels.length,
+                        itemBuilder: (context, index) {
+                          final novel = filteredNovels[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => DetailScreen(novel: novel),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                novel.title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                novel.author,
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                              );
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    novel.coverUrl,
+                                    height: 160,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(Icons.broken_image),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  novel.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  novel.author,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
             ),
           ],
         ),
@@ -216,8 +238,14 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Beranda'),
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Eksplor'),
-          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: 'Koleksiku'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifikasi'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark),
+            label: 'Koleksiku',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications),
+            label: 'Notifikasi',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
       ),
