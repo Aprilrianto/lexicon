@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/category.dart';
 import '../models/novel.dart';
 import 'detail_screen.dart';
 
@@ -12,29 +13,49 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-  List<Novel> trendingNovels = [];
-  bool isLoading = true;
+  List<Category> categories = [];
+  List<Novel> novels = [];
+  bool isLoadingCategories = true;
+  bool isLoadingNovels = true;
+  String searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+    fetchCategories();
     fetchNovels();
+  }
+
+  Future<void> fetchCategories() async {
+    try {
+      final response = await Supabase.instance.client.from('categories').select();
+      setState(() {
+        categories = (response as List).map((e) => Category.fromMap(e)).toList();
+        isLoadingCategories = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+    }
   }
 
   Future<void> fetchNovels() async {
     try {
       final response = await Supabase.instance.client.from('novels').select();
       setState(() {
-        trendingNovels =
-            (response as List).map((map) => Novel.fromMap(map)).toList();
-        isLoading = false;
+        novels = (response as List).map((e) => Novel.fromMap(e)).toList();
+        isLoadingNovels = false;
       });
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
       debugPrint('Error fetching novels: $e');
     }
+  }
+
+  List<Novel> get filteredNovels {
+    if (searchQuery.isEmpty) return novels;
+    return novels.where((novel) {
+      return novel.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          novel.author.toLowerCase().contains(searchQuery.toLowerCase());
+    }).toList();
   }
 
   void _onTabTapped(int index) {
@@ -51,59 +72,138 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text(
+          'Lexicon',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: Colors.deepPurple,
+      ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
           children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Lexicon',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                ),
-                IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
-              ],
-            ),
-
             // Search bar
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const TextField(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Cari judul, penulis, atau genre',
-                  border: InputBorder.none,
-                  icon: Icon(Icons.search),
+                  prefixIcon: const Icon(Icons.search),
+                  fillColor: Colors.grey.shade200,
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
+                onChanged: (val) {
+                  setState(() {
+                    searchQuery = val;
+                  });
+                },
               ),
             ),
 
-            // Genre chips
-            Wrap(
-              spacing: 8,
-              children: const [
-                Chip(label: Text('Fantasi')),
-                Chip(label: Text('Romantis')),
-                Chip(label: Text('Misteri')),
-                Chip(label: Text('Fiksi Ilmiah')),
-              ],
+            // Kategori
+            SizedBox(
+              height: 60,
+              child: isLoadingCategories
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        final category = categories[index];
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              searchQuery = category.name;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.deepPurple.shade50,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.deepPurple.shade100),
+                            ),
+                            child: Row(
+                              children: [
+                                if (category.iconUrl != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 6),
+                                    child: Image.network(category.iconUrl!, width: 20, height: 20),
+                                  ),
+                                Text(category.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    )),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
-            _buildSectionHeader('Trending Minggu Ini'),
-            _buildBookList(),
-
-            const SizedBox(height: 20),
-
-            _buildSectionHeader('Yang mungkin kamu suka'),
-            _buildBookList(),
+            // List Novel
+            Expanded(
+              child: isLoadingNovels
+                  ? const Center(child: CircularProgressIndicator())
+                  : GridView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        childAspectRatio: 0.6,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
+                      itemCount: filteredNovels.length,
+                      itemBuilder: (context, index) {
+                        final novel = filteredNovels[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => DetailScreen(novel: novel)),
+                            );
+                          },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  novel.coverUrl,
+                                  height: 160,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                novel.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                novel.author,
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
           ],
         ),
       ),
@@ -116,87 +216,10 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Beranda'),
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Eksplor'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark),
-            label: 'Koleksiku',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifikasi',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: 'Koleksiku'),
+          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifikasi'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          TextButton(onPressed: () {}, child: const Text('Tampilkan Semua')),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBookList() {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (trendingNovels.isEmpty) {
-      return const Text('Tidak ada novel yang tersedia.');
-    }
-
-    return SizedBox(
-      height: 170,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: trendingNovels.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          final novel = trendingNovels[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => DetailScreen(novel: novel)),
-              );
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 100,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: DecorationImage(
-                      image: NetworkImage(novel.coverUrl),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  novel.title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'by ${novel.author}',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }
