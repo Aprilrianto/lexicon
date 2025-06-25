@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/novel.dart';
+import 'chapters_list_screen.dart';
 
 class DetailScreen extends StatelessWidget {
   final Novel novel;
@@ -8,15 +9,29 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Contoh data bab. Ini nanti bisa di-fetch dari Supabase.
+    final List<Map<String, dynamic>> chapters = [
+      {'title': 'Bab 1: Awal', 'content': 'Isi bab 1...'},
+      {'title': 'Bab 2: Konflik', 'content': 'Isi bab 2...'},
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(novel.title),
         backgroundColor: Colors.deepPurple,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bookmark),
+            tooltip: 'Lihat Koleksi',
+            onPressed: () {
+              Navigator.pushNamed(context, '/bookmarks');
+            },
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Cover image
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: Image.network(
@@ -31,7 +46,6 @@ class DetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Title and author
           Text(
             novel.title,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -43,11 +57,9 @@ class DetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Description
           Text(novel.description, style: const TextStyle(fontSize: 16)),
           const SizedBox(height: 20),
 
-          // Metadata
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -60,6 +72,44 @@ class DetailScreen extends StatelessWidget {
           Text(
             'Tanggal Terbit: ${novel.publishedDate?.toLocal().toString().split(' ')[0] ?? '-'}',
             style: const TextStyle(fontSize: 14, color: Colors.black54),
+          ),
+          const SizedBox(height: 30),
+
+          // Tombol Navigasi
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.menu_book),
+                  label: const Text('Baca Bab'),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChaptersListScreen(chapters: chapters),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.bookmark),
+                  label: const Text('Koleksiku'),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/bookmarks');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple.shade200,
+                    foregroundColor: Colors.black,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

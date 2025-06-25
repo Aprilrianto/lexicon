@@ -7,11 +7,19 @@ class ChapterReadScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String title = chapter['title'] ?? 'Bab';
+    final String content = chapter['content'] ?? 'Konten tidak tersedia.';
+
     return Scaffold(
-      appBar: AppBar(title: Text(chapter['title'])),
+      appBar: AppBar(title: Text(title), backgroundColor: Colors.deepPurple),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(child: Text(chapter['content'])),
+        child: SingleChildScrollView(
+          child: Text(
+            content,
+            style: const TextStyle(fontSize: 16, height: 1.6),
+          ),
+        ),
       ),
     );
   }
