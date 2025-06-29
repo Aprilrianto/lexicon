@@ -20,7 +20,7 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
     super.dispose();
   }
 
-  // TODO: Tambahkan logika untuk verifikasi kode OTP
+  // Logika untuk verifikasi kode OTP
   void _verifyOtp() {
     FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
@@ -28,8 +28,9 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
       final otp = _pinController.text;
       print('OTP yang dimasukkan: $otp');
 
-      // Navigasi ke halaman selanjutnya jika verifikasi berhasil
-      // Navigator.pushReplacementNamed(context, '/create-new-password');
+      // DIUBAH: Navigasi ke halaman selanjutnya jika verifikasi berhasil
+      // Pastikan Anda memiliki halaman untuk rute '/update-password'
+      Navigator.pushReplacementNamed(context, '/updatepassword');
     }
   }
 
@@ -120,7 +121,6 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
                         ),
                         const SizedBox(height: 32),
                         // Field input OTP menggunakan Pinput
-                        // DIUBAH: Dibungkus dengan Center
                         Center(
                           child: Pinput(
                             controller: _pinController,
