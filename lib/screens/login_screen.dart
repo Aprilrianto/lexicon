@@ -204,19 +204,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey[100],
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          // DIUBAH: Menggunakan minimumSize untuk menyamakan tinggi dengan TextField
+                          minimumSize: const Size(double.infinity, 58),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Tombol Login Github (Sebelumnya Facebook)
+                      // Tombol Login Github
                       ElevatedButton.icon(
                         onPressed: () {
                           // TODO: Implement Github Sign-In logic
                         },
-                        // Pastikan Anda memiliki 'assets/github.png' di proyek Anda
                         icon: Image.asset('assets/github.png', height: 22),
                         label: const Text(
                           'Masuk dengan Github',
@@ -228,7 +228,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey[100],
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          // DIUBAH: Menggunakan minimumSize untuk menyamakan tinggi dengan TextField
+                          minimumSize: const Size(double.infinity, 58),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
