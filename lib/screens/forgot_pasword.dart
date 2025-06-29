@@ -37,9 +37,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       );
 
       if (mounted) {
-        // DIUBAH: Navigasi ke halaman konfirmasi setelah tautan berhasil dikirim.
-        // Anda perlu membuat halaman untuk rute '/check-email-notification'.
-        Navigator.pushReplacementNamed(context, '/check-email-notification');
+        Navigator.pushReplacementNamed(context, '/verificationemail');
       }
     } on AuthException catch (e) {
       if (mounted) {
