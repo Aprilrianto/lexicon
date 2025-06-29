@@ -268,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Center(
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/forgot');
+                    Navigator.pushNamed(context, '/forgotpass');
                   },
                   child: const Text(
                     'Lupa Passwordmu?',
