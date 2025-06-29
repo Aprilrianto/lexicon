@@ -211,14 +211,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Tombol Login Facebook
+                      // Tombol Login Github (Sebelumnya Facebook)
                       ElevatedButton.icon(
                         onPressed: () {
-                          // TODO: Implement Facebook Sign-In logic
+                          // TODO: Implement Github Sign-In logic
                         },
-                        icon: Image.asset('assets/facebook.png', height: 22),
+                        // Pastikan Anda memiliki 'assets/github.png' di proyek Anda
+                        icon: Image.asset('assets/github.png', height: 22),
                         label: const Text(
-                          'Masuk dengan Facebook',
+                          'Masuk dengan Github',
                           style: TextStyle(
                             color: Colors.black87,
                             fontWeight: FontWeight.w600,
