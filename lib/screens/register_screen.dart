@@ -108,7 +108,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true,
+        // DIUBAH: centerTitle diatur ke false agar judul rata kiri
+        centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
@@ -271,8 +272,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           onPressed: () {
                             /* TODO: Implement Facebook Sign-In */
                           },
-                          iconAsset: 'assets/facebook.png',
-                          label: 'Masuk dengan Facebook',
+                          iconAsset: 'assets/github.png',
+                          label: 'Masuk dengan Github',
                         ),
                       ],
                     ),
