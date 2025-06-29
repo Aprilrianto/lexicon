@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lexiconn/screens/forgot_pasword.dart';
+import 'package:lexiconn/screens/update_password.dart';
+import 'package:lexiconn/screens/verification_email.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,6 +45,9 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/bookmarks': (context) => const BookmarkScreen(),
+        '/forgotpass': (context) => const ForgotPasswordScreen(),
+        '/verificationemail': (context) => const VerificationEmailScreen(),
+        '/updatepassword': (context) => const UpdatePasswordScreen(),
 
         // Fix: Routing halaman baca bab
         '/read': (context) {

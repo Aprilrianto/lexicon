@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,13 +12,30 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _obscureText = true;
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  // Fungsi untuk login dengan Supabase
   Future<void> _login() async {
+    // Sembunyikan keyboard jika terbuka
+    FocusScope.of(context).unfocus();
+
+    // Periksa apakah widget masih terpasang sebelum melanjutkan
+    if (!mounted) return;
+
     try {
       final res = await Supabase.instance.client.auth.signInWithPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
+
+      if (!mounted) return;
 
       if (res.user != null) {
         Navigator.pushReplacementNamed(context, '/home');
@@ -25,136 +43,266 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Login gagal, email atau password salah'),
+            backgroundColor: Colors.red,
           ),
         );
       }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.message}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Terjadi kesalahan: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // AppBar disesuaikan dengan desain
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            // Aksi untuk kembali, jika halaman ini bisa diakses dari halaman lain
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
+        ),
+        title: const Text(
+          'Masuk',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+      ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          // Menggunakan Column untuk menata widget dari atas ke bawah
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Masuk',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Masuk Sekarang untuk\nMulai Petualangan Membacamu!',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Masukkan Email / Nama Pengguna',
-                  border: OutlineInputBorder(),
+              // Expanded digunakan agar SingleChildScrollView mengisi ruang yang tersedia
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    // crossAxisAlignment diubah menjadi .stretch
+                    // agar semua anak widget (termasuk tombol) mengisi lebar yang tersedia.
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 20),
+                      // Judul utama
+                      const Text(
+                        'Masuk Sekarang untuk\nMulai Petualangan\nMembacamu!',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Sub-judul
+                      Text(
+                        'Masuk dengan akunmu atau daftar gratis untuk menikmati koleksi novel lengkap, simpan progres baca, dan dapatkan rekomendasi khusus.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      // TextField untuk Email
+                      TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          hintText: 'Masukkan Email / Nomor Hp kamu',
+                          prefixIcon: Icon(
+                            Icons.mail_outline,
+                            color: Colors.grey[600],
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // TextField untuk Password
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: _obscureText,
+                        decoration: InputDecoration(
+                          hintText: 'Masukkan Passwordmu',
+                          prefixIcon: Icon(
+                            Icons.lock_outline,
+                            color: Colors.grey[600],
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureText
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: Colors.grey[600],
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureText = !_obscureText;
+                              });
+                            },
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Teks pemisah untuk social login
+                      Center(
+                        child: Text(
+                          'Masuk dengan',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Tombol Login Google
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: Implement Google Sign-In logic
+                        },
+                        icon: Image.asset('assets/google.png', height: 22),
+                        label: const Text(
+                          'Masuk dengan Google',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[100],
+                          elevation: 0,
+                          // DIUBAH: Menggunakan minimumSize untuk menyamakan tinggi dengan TextField
+                          minimumSize: const Size(double.infinity, 58),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Tombol Login Github
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: Implement Github Sign-In logic
+                        },
+                        icon: Image.asset('assets/github.png', height: 22),
+                        label: const Text(
+                          'Masuk dengan Github',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[100],
+                          elevation: 0,
+                          // DIUBAH: Menggunakan minimumSize untuk menyamakan tinggi dengan TextField
+                          minimumSize: const Size(double.infinity, 58),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Masukkan Passwordmu',
-                  border: OutlineInputBorder(),
+              // Link "Daftar" dan "Lupa Password" diletakkan di bawah
+              Center(
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    children: [
+                      const TextSpan(text: 'Belum memiliki akun? '),
+                      TextSpan(
+                        text: 'Daftar',
+                        style: const TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer:
+                            TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.pushNamed(context, '/register');
+                              },
+                      ),
+                    ],
+                  ),
                 ),
-                obscureText: true,
               ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
+              const SizedBox(height: 8),
+              Center(
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/forgot');
+                    Navigator.pushNamed(context, '/forgotpass');
                   },
                   child: const Text(
-                    'Lupa Password?',
-                    style: TextStyle(color: Colors.blue),
+                    'Lupa Passwordmu?',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+
+              const SizedBox(height: 16),
+              // Tombol utama "Masuk"
+              ElevatedButton(
+                onPressed: _login,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text('Masuk', style: TextStyle(fontSize: 16)),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Masuk',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black54,
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
-              Row(
-                children: const [
-                  Expanded(child: Divider(thickness: 1)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: Text("atau masuk dengan"),
-                  ),
-                  Expanded(child: Divider(thickness: 1)),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: Image.asset('assets/google.png', height: 20),
-                      label: const Text('Google'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: Image.asset('assets/facebook.png', height: 20),
-                      label: const Text('Facebook'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Belum punya akun? "),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/register');
-                    },
-                    child: const Text(
-                      "Daftar",
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              const SizedBox(height: 16), // Padding bawah
             ],
           ),
         ),
