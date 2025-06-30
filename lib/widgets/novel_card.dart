@@ -18,25 +18,18 @@ class NovelCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover Image
+            // Cover Image (pakai default dari assets)
             ClipRRect(
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 bottomLeft: Radius.circular(12),
               ),
-              child: novel.coverUrl.isNotEmpty
-                  ? Image.network(
-                      novel.coverUrl,
-                      width: 100,
-                      height: 140,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      width: 100,
-                      height: 140,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, size: 40, color: Colors.white),
-                    ),
+              child: Image.asset(
+                'assets/default_cover.png',
+                width: 100,
+                height: 140,
+                fit: BoxFit.cover,
+              ),
             ),
 
             // Text Info
@@ -58,19 +51,25 @@ class NovelCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       "by ${novel.author}",
-                      style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       novel.description,
-                      style: const TextStyle(fontSize: 13, color: Colors.black87),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black87,
+                      ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
