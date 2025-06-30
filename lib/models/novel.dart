@@ -3,7 +3,6 @@ class Novel {
   final String title;
   final String author;
   final String description;
-  final String coverUrl;
   final String category; // Genre novel, misalnya: 'Fantasy', 'Romance'
   final String status; // 'Completed' atau 'On Going'
   final int chapterCount; // Total jumlah chapter
@@ -14,7 +13,6 @@ class Novel {
     required this.title,
     required this.author,
     required this.description,
-    required this.coverUrl,
     required this.category,
     required this.status,
     required this.chapterCount,
@@ -26,7 +24,6 @@ class Novel {
     title: m['title'] ?? '',
     author: m['author'] ?? '',
     description: m['description'] ?? '',
-    coverUrl: m['cover_url'] ?? '',
     category: m['category'] ?? '',
     status: m['status'] ?? 'On Going',
     chapterCount: m['chapter_count'] ?? 0,
@@ -41,7 +38,6 @@ class Novel {
     'title': title,
     'author': author,
     'description': description,
-    'cover_url': coverUrl,
     'category': category,
     'status': status,
     'chapter_count': chapterCount,
