@@ -61,7 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onTabTapped(int index) {
-    if (index == 4) {
+    if (index == 2) {
+      Navigator.pushNamed(context, '/bookmarks');
+    } else if (index == 4) {
       Navigator.pushNamed(context, '/profile');
     } else {
       setState(() {
@@ -139,24 +141,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: Colors.deepPurple.shade100,
                                 ),
                               ),
-                              child: Row(
-                                children: [
-                                  if (category.iconUrl != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 6),
-                                      child: Image.network(
-                                        category.iconUrl!,
-                                        width: 20,
-                                        height: 20,
-                                      ),
-                                    ),
-                                  Text(
-                                    category.name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                category.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           );
@@ -195,16 +184,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Gambar default lokal
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    novel.coverUrl,
+                                  child: Image.asset(
+                                    'assets/default_cover.png',
                                     height: 160,
                                     width: double.infinity,
                                     fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(Icons.broken_image),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
