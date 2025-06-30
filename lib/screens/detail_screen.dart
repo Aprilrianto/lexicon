@@ -9,7 +9,7 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Contoh data bab. Ini nanti bisa di-fetch dari Supabase.
+    // Contoh data bab. Nantinya bisa diganti dengan data dari Supabase
     final List<Map<String, dynamic>> chapters = [
       {'title': 'Bab 1: Awal', 'content': 'Isi bab 1...'},
       {'title': 'Bab 2: Konflik', 'content': 'Isi bab 2...'},
@@ -32,16 +32,14 @@ class DetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Gambar cover default
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              novel.coverUrl,
+            child: Image.asset(
+              'assets/default_cover.png',
               height: 250,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder:
-                  (context, error, stackTrace) =>
-                      const Icon(Icons.broken_image, size: 100),
             ),
           ),
           const SizedBox(height: 20),
@@ -75,7 +73,7 @@ class DetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 30),
 
-          // Tombol Navigasi
+          // Tombol Navigasi Baca & Koleksi
           Row(
             children: [
               Expanded(
@@ -98,7 +96,7 @@ class DetailScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.bookmark),
+                  icon: const Icon(Icons.bookmark_add),
                   label: const Text('Koleksiku'),
                   onPressed: () {
                     Navigator.pushNamed(context, '/bookmarks');

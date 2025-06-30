@@ -1,16 +1,13 @@
 class Category {
   final int id;
   final String name;
-  final String? description; // opsional jika deskripsi kategori diperlukan
-  final String? iconUrl; // opsional jika icon kategori ingin ditampilkan
-  final List<int>?
-  novelIds; // daftar ID novel yang tergolong dalam kategori ini
+  final String? description;
+  final List<int>? novelIds;
 
   Category({
     required this.id,
     required this.name,
     this.description,
-    this.iconUrl,
     this.novelIds,
   });
 
@@ -18,7 +15,6 @@ class Category {
     id: m['id'],
     name: m['name'] ?? '',
     description: m['description'],
-    iconUrl: m['icon_url'],
     novelIds: m['novel_ids'] != null ? List<int>.from(m['novel_ids']) : null,
   );
 
@@ -26,7 +22,6 @@ class Category {
     'id': id,
     'name': name,
     'description': description,
-    'icon_url': iconUrl,
     'novel_ids': novelIds,
   };
 }
