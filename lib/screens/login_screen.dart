@@ -1,6 +1,10 @@
+// screens/login_screen.dart
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/auth_service.dart'; // <-- BARU: Import service
+import '../models/profile.dart'; // <-- BARU: Import model
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +17,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscureText = true;
+  bool _isLoading = false; // <-- BARU: State untuk loading
+
+  final _authService = AuthService(); // <-- BARU: Instance dari service
 
   @override
   void dispose() {
@@ -21,37 +28,36 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // Fungsi untuk login dengan Supabase
+  // PERUBAHAN: Logika fungsi _login dirombak total
   Future<void> _login() async {
-    // Sembunyikan keyboard jika terbuka
     FocusScope.of(context).unfocus();
-
-    // Periksa apakah widget masih terpasang sebelum melanjutkan
     if (!mounted) return;
 
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      final res = await Supabase.instance.client.auth.signInWithPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+      final Profile profile = await _authService.login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
       );
 
       if (!mounted) return;
 
-      if (res.user != null) {
-        Navigator.pushReplacementNamed(context, '/home');
+      // Logika "pembersihan" role untuk perbandingan yang aman
+      String cleanRole = profile.role.trim().toLowerCase();
+
+      if (cleanRole == 'admin') {
+        Navigator.pushReplacementNamed(context, '/admin_dashboard');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login gagal, email atau password salah'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.message}'),
+          content: Text('Login Gagal: ${e.message}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -63,13 +69,19 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // UI Anda tetap sama persis, hanya tombol "Masuk" yang disesuaikan
     return Scaffold(
-      // AppBar disesuaikan dengan desain
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -77,7 +89,6 @@ class _LoginScreenState extends State<LoginScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            // Aksi untuk kembali, jika halaman ini bisa diakses dari halaman lain
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
             }
@@ -96,20 +107,15 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          // Menggunakan Column untuk menata widget dari atas ke bawah
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Expanded digunakan agar SingleChildScrollView mengisi ruang yang tersedia
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
-                    // crossAxisAlignment diubah menjadi .stretch
-                    // agar semua anak widget (termasuk tombol) mengisi lebar yang tersedia.
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 20),
-                      // Judul utama
                       const Text(
                         'Masuk Sekarang untuk\nMulai Petualangan\nMembacamu!',
                         style: TextStyle(
@@ -119,7 +125,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Sub-judul
                       Text(
                         'Masuk dengan akunmu atau daftar gratis untuk menikmati koleksi novel lengkap, simpan progres baca, dan dapatkan rekomendasi khusus.',
                         style: TextStyle(
@@ -129,7 +134,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 32),
-                      // TextField untuk Email
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -148,7 +152,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // TextField untuk Password
                       TextField(
                         controller: _passwordController,
                         obscureText: _obscureText,
@@ -180,7 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      // Teks pemisah untuk social login
                       Center(
                         child: Text(
                           'Masuk dengan',
@@ -188,11 +190,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Tombol Login Google
                       ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: Implement Google Sign-In logic
-                        },
+                        onPressed: () {},
                         icon: Image.asset('assets/google.png', height: 22),
                         label: const Text(
                           'Masuk dengan Google',
@@ -204,7 +203,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey[100],
                           elevation: 0,
-                          // DIUBAH: Menggunakan minimumSize untuk menyamakan tinggi dengan TextField
                           minimumSize: const Size(double.infinity, 58),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -212,11 +210,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Tombol Login Github
                       ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: Implement Github Sign-In logic
-                        },
+                        onPressed: () {},
                         icon: Image.asset('assets/github.png', height: 22),
                         label: const Text(
                           'Masuk dengan Github',
@@ -228,7 +223,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey[100],
                           elevation: 0,
-                          // DIUBAH: Menggunakan minimumSize untuk menyamakan tinggi dengan TextField
                           minimumSize: const Size(double.infinity, 58),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -240,7 +234,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-              // Link "Daftar" dan "Lupa Password" diletakkan di bawah
               Center(
                 child: RichText(
                   textAlign: TextAlign.center,
@@ -280,11 +273,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-              // Tombol utama "Masuk"
               ElevatedButton(
-                onPressed: _login,
+                onPressed: _isLoading ? null : _login, // <-- PERUBAHAN
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[300],
                   padding: const EdgeInsets.symmetric(vertical: 18),
@@ -293,16 +284,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Masuk',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black54,
-                  ),
-                ),
+                child:
+                    _isLoading // <-- PERUBAHAN
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.black54,
+                            strokeWidth: 3,
+                          ),
+                        )
+                        : const Text(
+                          'Masuk',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black54,
+                          ),
+                        ),
               ),
-              const SizedBox(height: 16), // Padding bawah
+              const SizedBox(height: 16),
             ],
           ),
         ),

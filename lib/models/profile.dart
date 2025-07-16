@@ -1,9 +1,12 @@
+// models/profile.dart
+
 class Profile {
   final String id;
   final String fullName;
   final String username;
   final String avatarUrl;
   final String bio;
+  final String role; // <-- BARU: Tambahkan field role
 
   Profile({
     required this.id,
@@ -11,6 +14,7 @@ class Profile {
     required this.username,
     required this.avatarUrl,
     required this.bio,
+    required this.role, // <-- BARU: Tambahkan di constructor
   });
 
   factory Profile.fromMap(Map<String, dynamic> map) {
@@ -20,6 +24,8 @@ class Profile {
       username: map['username'] ?? '',
       avatarUrl: map['avatar_url'] ?? '',
       bio: map['bio'] ?? '',
+      // <-- BARU: Ambil data 'role', default ke 'user' jika tidak ada
+      role: map['role'] ?? 'user',
     );
   }
 
@@ -30,6 +36,7 @@ class Profile {
       'username': username,
       'avatar_url': avatarUrl,
       'bio': bio,
+      'role': role, // <-- BARU: Tambahkan ke map
     };
   }
 }

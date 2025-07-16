@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lexiconn/screens/admin_dashboard_screen.dart'; // Pastikan file ini ada
 import 'package:lexiconn/screens/forgot_pasword.dart';
 import 'package:lexiconn/screens/update_password.dart';
 import 'package:lexiconn/screens/verification_email.dart';
@@ -37,19 +38,19 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const SplashScreen(),
+      home:
+          const SplashScreen(), // Error ini akan hilang setelah kelasnya ditambahkan
       routes: {
         '/onboarding': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeScreen(),
+        '/admin_dashboard': (context) => const AdminDashboardScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/bookmarks': (context) => const BookmarkScreen(),
         '/forgotpass': (context) => const ForgotPasswordScreen(),
         '/verificationemail': (context) => const VerificationEmailScreen(),
         '/updatepassword': (context) => const UpdatePasswordScreen(),
-
-        // Fix: Routing halaman baca bab
         '/read': (context) {
           final args = ModalRoute.of(context)!.settings.arguments;
           if (args is Map<String, dynamic>) {
@@ -65,6 +66,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// KELAS YANG HILANG SEBELUMNYA, SEKARANG DITAMBAHKAN KEMBALI
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -72,6 +74,7 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
+// State class yang sudah benar dari sebelumnya
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
@@ -81,18 +84,46 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _navigate() async {
     await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+
     final prefs = await SharedPreferences.getInstance();
     final onboardingSeen = prefs.getBool('onboarding_seen') ?? false;
 
     if (!onboardingSeen) {
       Navigator.pushReplacementNamed(context, '/onboarding');
-    } else {
-      final session = Supabase.instance.client.auth.currentSession;
-      if (session != null) {
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      // Jika ada sesi, cek role dari database
+      try {
+        final profileData =
+            await Supabase.instance.client
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+
+        final role =
+            (profileData['role'] as String? ?? 'user').trim().toLowerCase();
+
+        if (!mounted) return;
+
+        if (role == 'admin') {
+          Navigator.pushReplacementNamed(context, '/admin_dashboard');
+        } else {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } catch (e) {
+        // Jika gagal (misal profil belum ada), arahkan ke home sebagai default
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
       }
+    } else {
+      // Jika tidak ada sesi, ke login
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
