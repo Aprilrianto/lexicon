@@ -2,45 +2,50 @@ class Novel {
   final int id;
   final String title;
   final String author;
-  final String description;
-  final String category; // Genre novel, misalnya: 'Fantasy', 'Romance'
-  final String status; // 'Completed' atau 'On Going'
-  final int chapterCount; // Total jumlah chapter
+  final int categoryId;
+  final String? categoryName;     // ← di‑join dari tabel categories
+  final String status;            // draft / published
+  final int chapterCount;
+  final String? description;
+  final String? coverUrl;
   final DateTime? publishedDate;
 
   Novel({
     required this.id,
     required this.title,
     required this.author,
-    required this.description,
-    required this.category,
+    required this.categoryId,
     required this.status,
     required this.chapterCount,
+    this.categoryName,
+    this.description,
+    this.coverUrl,
     this.publishedDate,
   });
 
-  factory Novel.fromMap(Map<String, dynamic> m) => Novel(
-    id: m['id'],
-    title: m['title'] ?? '',
-    author: m['author'] ?? '',
-    description: m['description'] ?? '',
-    category: m['category'] ?? '',
-    status: m['status'] ?? 'On Going',
-    chapterCount: m['chapter_count'] ?? 0,
-    publishedDate:
-        m['published_date'] != null
-            ? DateTime.parse(m['published_date'])
+  factory Novel.fromMap(Map<String, dynamic> map) => Novel(
+        id: map['id'] as int,
+        title: map['title'] as String,
+        author: map['author'] as String,
+        categoryId: map['category_id'] as int,
+        categoryName: map['categories']?['name'] as String?, // hasil join
+        status: map['status'] as String,
+        chapterCount: (map['chapter_count'] ?? 0) as int,
+        description: map['description'] as String?,
+        coverUrl: map['cover_url'] as String?,
+        publishedDate: map['published_date'] != null
+            ? DateTime.parse(map['published_date'])
             : null,
-  );
+      );
 
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'title': title,
-    'author': author,
-    'description': description,
-    'category': category,
-    'status': status,
-    'chapter_count': chapterCount,
-    'published_date': publishedDate?.toIso8601String(),
-  };
+  Map<String, dynamic> toInsert() => {
+        'title': title,
+        'author': author,
+        'description': description,
+        'category_id': categoryId,
+        'status': status,
+        'chapter_count': chapterCount,
+        'published_date': publishedDate?.toIso8601String(),
+        'cover_url': coverUrl,
+      };
 }

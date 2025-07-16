@@ -2,81 +2,27 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/novel.dart';
 
 class NovelService {
-  final _db = Supabase.instance.client.from('novels');
+  final _client = Supabase.instance.client;
 
-  // Ambil semua novel
   Future<List<Novel>> getAll() async {
-    final res = await _db.select().order('created_at', ascending: false);
-    return (res as List).map((e) => Novel.fromMap(e)).toList();
+    final data = await _client
+        .from('novels')
+        .select('*, categories(name)')
+        .order('id', ascending: false);
+
+    return (data as List<dynamic>)
+        .map((e) => Novel.fromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
-  // Ambil novel berdasarkan ID
-  Future<Novel?> getById(int id) async {
-    final res = await _db.select().eq('id', id).maybeSingle();
-    return res != null ? Novel.fromMap(res) : null;
+  Future<int> insert(Novel novel) async {
+    final res = await _client.from('novels').insert(novel.toInsert()).select();
+    return (res.first as Map<String, dynamic>)['id'] as int;
   }
 
-  // Tambah novel baru
-  Future<int?> create({
-    required String title,
-    required String author,
-    required String desc,
-    required String coverUrl,
-    required DateTime publishedDate,
-    int? categoryId,
-  }) async {
-    final res =
-        await _db
-            .insert({
-              'title': title,
-              'author': author,
-              'description': desc,
-              'cover_url': coverUrl,
-              'published_date': publishedDate.toIso8601String(),
-              'category_id': categoryId,
-            })
-            .select()
-            .maybeSingle();
+  Future<void> update(int id, Map<String, dynamic> fields) async =>
+      _client.from('novels').update(fields).eq('id', id);
 
-    return res?['id'];
-  }
-
-  // Perbarui data novel
-  Future<bool> update(
-    int id, {
-    required String title,
-    required String author,
-    required String desc,
-    required String coverUrl,
-    required DateTime publishedDate,
-    int? categoryId,
-  }) async {
-    try {
-      await _db
-          .update({
-            'title': title,
-            'author': author,
-            'description': desc,
-            'cover_url': coverUrl,
-            'published_date': publishedDate.toIso8601String(),
-            'category_id': categoryId,
-          })
-          .eq('id', id);
-      return true;
-    } catch (e) {
-      print("Update error: $e");
-      return false;
-    }
-  }
-
-  // Hapus novel
-  Future<bool> delete(int id) async {
-    try {
-      await _db.delete().eq('id', id);
-      return true;
-    } catch (e) {
-      print("Delete error: $e");
-      return false;
-    }
-  }
+  Future<void> delete(int id) async =>
+      _client.from('novels').delete().eq('id', id);
 }
