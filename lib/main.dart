@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lexiconn/screens/admin_dashboard_screen.dart'; // Pastikan file ini ada
+import 'package:lexiconn/screens/admin_dashboard_screen.dart';
+import 'package:lexiconn/screens/edit_profile_admin.dart'; // DIIMPOR
 import 'package:lexiconn/screens/forgot_pasword.dart';
 import 'package:lexiconn/screens/update_password.dart';
 import 'package:lexiconn/screens/verification_email.dart';
@@ -38,8 +39,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home:
-          const SplashScreen(), // Error ini akan hilang setelah kelasnya ditambahkan
+      home: const SplashScreen(),
       routes: {
         '/onboarding': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
@@ -51,6 +51,8 @@ class MyApp extends StatelessWidget {
         '/forgotpass': (context) => const ForgotPasswordScreen(),
         '/verificationemail': (context) => const VerificationEmailScreen(),
         '/updatepassword': (context) => const UpdatePasswordScreen(),
+        // RUTE BARU DITAMBAHKAN
+        '/edit-profile': (context) => const EditProfileAdminScreen(),
         '/read': (context) {
           final args = ModalRoute.of(context)!.settings.arguments;
           if (args is Map<String, dynamic>) {
@@ -66,7 +68,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// KELAS YANG HILANG SEBELUMNYA, SEKARANG DITAMBAHKAN KEMBALI
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -74,7 +75,6 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-// State class yang sudah benar dari sebelumnya
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
@@ -96,7 +96,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final session = Supabase.instance.client.auth.currentSession;
     if (session != null) {
-      // Jika ada sesi, cek role dari database
       try {
         final profileData =
             await Supabase.instance.client
@@ -116,13 +115,11 @@ class _SplashScreenState extends State<SplashScreen> {
           Navigator.pushReplacementNamed(context, '/home');
         }
       } catch (e) {
-        // Jika gagal (misal profil belum ada), arahkan ke home sebagai default
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/home');
         }
       }
     } else {
-      // Jika tidak ada sesi, ke login
       Navigator.pushReplacementNamed(context, '/login');
     }
   }

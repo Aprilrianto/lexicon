@@ -138,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          hintText: 'Masukkan Email / Nomor Hp kamu',
+                          hintText: 'Masukkan Email Kamu',
                           prefixIcon: Icon(
                             Icons.mail_outline,
                             color: Colors.grey[600],
@@ -156,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _passwordController,
                         obscureText: _obscureText,
                         decoration: InputDecoration(
-                          hintText: 'Masukkan Passwordmu',
+                          hintText: 'Masukkan Password Kamu',
                           prefixIcon: Icon(
                             Icons.lock_outline,
                             color: Colors.grey[600],
