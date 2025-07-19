@@ -174,7 +174,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Email
                         _buildTextFormField(
                           controller: _emailController,
-                          hintText: 'Masukkan Email / Nomor Hp kamu',
+                          hintText: 'Masukkan Email Kamu',
                           prefixIcon: Icons.mail_outline,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
@@ -191,7 +191,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Password
                         _buildTextFormField(
                           controller: _passwordController,
-                          hintText: 'Masukkan Passwordmu',
+                          hintText: 'Masukkan Password Kamu',
                           prefixIcon: Icons.lock_outline,
                           obscureText: !_isPasswordVisible,
                           suffixIcon: IconButton(
@@ -221,7 +221,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Konfirmasi Password
                         _buildTextFormField(
                           controller: _confirmPasswordController,
-                          hintText: 'Konfirmasi Passwordmu',
+                          hintText: 'Konfirmasi Password Kamu',
                           prefixIcon: Icons.lock_outline,
                           obscureText: !_isConfirmPasswordVisible,
                           suffixIcon: IconButton(
