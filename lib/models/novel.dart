@@ -3,12 +3,13 @@ class Novel {
   final String title;
   final String author;
   final int categoryId;
-  final String? categoryName;     // ← di‑join dari tabel categories
-  final String status;            // draft / published
+  final String? categoryName; // ← hasil join dari tabel categories
+  final String status;        // draft / published
   final int chapterCount;
   final String? description;
   final String? coverUrl;
   final DateTime? publishedDate;
+  final String isi;           // ← tambah field isi
 
   Novel({
     required this.id,
@@ -17,6 +18,7 @@ class Novel {
     required this.categoryId,
     required this.status,
     required this.chapterCount,
+    required this.isi, // wajib diisi
     this.categoryName,
     this.description,
     this.coverUrl,
@@ -36,6 +38,7 @@ class Novel {
         publishedDate: map['published_date'] != null
             ? DateTime.parse(map['published_date'])
             : null,
+        isi: map['isi'] ?? '', // isi novel
       );
 
   Map<String, dynamic> toInsert() => {
@@ -47,5 +50,6 @@ class Novel {
         'chapter_count': chapterCount,
         'published_date': publishedDate?.toIso8601String(),
         'cover_url': coverUrl,
+        'isi': isi,
       };
 }

@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';            // kIsWeb
+import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/novel.dart';
-import '../models/category.dart' as model;            // ← alias untuk model Category
+import '../models/category.dart' as model; // alias agar tidak bentrok
 import '../services/novel_service.dart';
 import '../services/category_service.dart';
 import '../services/strorage_service.dart';
@@ -20,21 +20,21 @@ class NovelFormScreen extends StatefulWidget {
 }
 
 class _NovelFormScreenState extends State<NovelFormScreen> {
-  final _formKey  = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   final _novelSvc = NovelService();
-  final _catSvc   = CategoryService();
+  final _catSvc = CategoryService();
 
   late TextEditingController _title;
   late TextEditingController _author;
   late TextEditingController _desc;
+  late TextEditingController _isi;
 
   String _status = 'draft';
-  int?   _catId;
+  int? _catId;
 
-  // ---- Gambar ----
-  File?     _coverFile;        // mobile/desktop
-  XFile?    _webPickedFile;    // web upload
-  Uint8List? _webBytes;        // web preview
+  File? _coverFile;
+  XFile? _webPickedFile;
+  Uint8List? _webBytes;
 
   List<model.Category> _cats = [];
   bool _saving = false;
@@ -42,12 +42,22 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
   @override
   void initState() {
     super.initState();
-    _title  = TextEditingController(text: widget.existing?.title ?? '');
+    _title = TextEditingController(text: widget.existing?.title ?? '');
     _author = TextEditingController(text: widget.existing?.author ?? '');
-    _desc   = TextEditingController(text: widget.existing?.description ?? '');
+    _desc = TextEditingController(text: widget.existing?.description ?? '');
+    _isi = TextEditingController(text: widget.existing?.isi ?? '');
     _status = widget.existing?.status ?? 'draft';
-    _catId  = widget.existing?.categoryId;
+    _catId = widget.existing?.categoryId;
     _loadCats();
+  }
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _author.dispose();
+    _desc.dispose();
+    _isi.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCats() async {
@@ -55,40 +65,37 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
     if (mounted) setState(() => _cats = list);
   }
 
-  // ---------- PILIH GAMBAR ----------
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
     if (kIsWeb) {
       _webPickedFile = picked;
-      _webBytes      = await picked.readAsBytes();
+      _webBytes = await picked.readAsBytes();
     } else {
-      _coverFile     = File(picked.path);
+      _coverFile = File(picked.path);
     }
     if (mounted) setState(() {});
   }
 
-  // ---------- SIMPAN ----------
   Future<void> _save() async {
     if (!_formKey.currentState!.validate() || _catId == null) return;
     setState(() => _saving = true);
 
     try {
-      // objek dasar tanpa cover
       final baseNovel = Novel(
-        id           : widget.existing?.id ?? 0,
-        title        : _title.text,
-        author       : _author.text,
-        description  : _desc.text,
-        categoryId   : _catId!,
-        status       : _status,
-        chapterCount : widget.existing?.chapterCount ?? 0,
-        coverUrl     : null,
+        id: widget.existing?.id ?? 0,
+        title: _title.text,
+        author: _author.text,
+        description: _desc.text,
+        categoryId: _catId!,
+        status: _status,
+        chapterCount: widget.existing?.chapterCount ?? 0,
+        coverUrl: null,
         publishedDate: DateTime.now(),
+        isi: _isi.text,
       );
 
-      // ---------- INSERT ----------
       if (widget.existing == null) {
         final newId = await _novelSvc.insert(baseNovel);
 
@@ -99,9 +106,7 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
           final url = await StorageService.uploadCover(newId, _coverFile!);
           await _novelSvc.update(newId, {'cover_url': url});
         }
-      }
-      // ---------- UPDATE ----------
-      else {
+      } else {
         final id = widget.existing!.id;
         String? coverUrl = widget.existing!.coverUrl;
 
@@ -120,15 +125,15 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
-  // ---------- UI ----------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -162,12 +167,14 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
                   DropdownButtonFormField<int>(
                     value: _catId,
                     decoration: const InputDecoration(labelText: 'Kategori'),
-                    items: _cats.map<DropdownMenuItem<int>>(
-                      (model.Category c) => DropdownMenuItem(
-                        value: c.id,
-                        child: Text(c.name),
-                      ),
-                    ).toList(),
+                    items: _cats
+                        .map<DropdownMenuItem<int>>(
+                          (model.Category c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text(c.name),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (v) => _catId = v,
                     validator: (v) => v == null ? 'Pilih kategori' : null,
                   ),
@@ -176,6 +183,14 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
                     decoration: const InputDecoration(labelText: 'Sinopsis'),
                     minLines: 2,
                     maxLines: 5,
+                  ),
+                  TextFormField(
+                    controller: _isi,
+                    decoration: const InputDecoration(labelText: 'Isi Cerita'),
+                    minLines: 5,
+                    maxLines: 10,
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Isi wajib diisi' : null,
                   ),
                   DropdownButtonFormField<String>(
                     value: _status,
@@ -198,7 +213,6 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
     );
   }
 
-  // ---------- PREVIEW COVER ----------
   Widget _buildCoverPreview() {
     if (kIsWeb && _webBytes != null) {
       return Image.memory(_webBytes!, height: 180, fit: BoxFit.cover);

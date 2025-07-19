@@ -12,17 +12,64 @@ class DetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // COVER
           Center(
             child: novel.coverUrl != null
                 ? Image.network(novel.coverUrl!, height: 200)
                 : Image.asset('assets/default_cover.png', height: 200),
           ),
+          const SizedBox(height: 12),
+
+          // JUDUL
+          Center(
+            child: Text(
+              novel.title,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
-          Text(novel.description ?? '-',
-              style: const TextStyle(fontSize: 16)),
-          const SizedBox(height: 8),
-          Text('Kategori: ${novel.categoryName ?? '-'}',
-              style: const TextStyle(color: Colors.grey)),
+
+          // KATEGORI + PENULIS
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Kategori: ${novel.categoryName ?? '-'}',
+                style: const TextStyle(color: Colors.grey),
+              ),
+              Text(
+                'Penulis: ${novel.author}',
+                style: const TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // SINOPSIS
+          const Text(
+            'Sinopsis',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            novel.description ?? '-',
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+
+          // ISI CERITA
+          const Text(
+            'Isi Cerita',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            novel.isi,
+            style: const TextStyle(fontSize: 16),
+          ),
         ],
       ),
     );
