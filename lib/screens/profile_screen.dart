@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'edit_profile_screen.dart'; // Pastikan nama file ini benar
+import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
+import 'my_works_screen.dart'; // Impor halaman "Karya Saya"
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -24,7 +25,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user == null) {
       throw Exception('User tidak terautentikasi');
     }
-    // Memastikan semua kolom yang dibutuhkan terpilih
     final data =
         await Supabase.instance.client
             .from('profiles')
@@ -84,17 +84,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final profile = snapshot.data!;
           final avatarUrl = profile["avatar_url"];
           final username = profile["username"] ?? 'User';
-          final bio = profile["bio"]; // Mengambil data bio
+          final bio = profile["bio"];
 
           return RefreshIndicator(
             onRefresh: () async => _refreshProfile(),
             child: ListView(
               padding: const EdgeInsets.all(16.0),
               children: [
-                // Mengirim data bio ke widget header
                 _buildProfileHeader(context, avatarUrl, username, bio),
                 const SizedBox(height: 20),
                 _buildOptionSection([
+                  // DITAMBAHKAN: Opsi "Karya Saya"
+                  _OptionItem(
+                    icon: Icons.edit_note_outlined,
+                    title: 'Karya Saya',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MyWorksScreen(),
+                        ),
+                      );
+                    },
+                  ),
                   _OptionItem(
                     icon: Icons.history,
                     title: 'Bacaan Terakhir',
@@ -143,7 +155,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // DIUBAH: Widget header profil sekarang menerima dan menampilkan bio
   Widget _buildProfileHeader(
     BuildContext context,
     String? avatarUrl,
@@ -189,7 +200,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         fontSize: 16,
                       ),
                     ),
-                    // Menampilkan bio jika ada dan tidak kosong
                     if (bio != null && bio.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(

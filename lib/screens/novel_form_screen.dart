@@ -81,19 +81,18 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
       if (user == null)
         throw Exception('Anda harus login untuk membuat cerita.');
 
-      // DIUBAH: Menambahkan 'published_date' saat membuat novel baru
+      // DITAMBAHKAN: Menyertakan user_id saat membuat novel
       final response =
           await supabase
               .from('novels')
               .insert({
+                'user_id': user.id, // Menghubungkan novel dengan user
                 'title': _titleController.text.trim(),
                 'author': _authorController.text.trim(),
                 'description': _descriptionController.text.trim(),
                 'status': _status,
                 'category_id': _selectedCategoryId,
-                'published_date':
-                    DateTime.now()
-                        .toIso8601String(), // Tanggal otomatis ditambahkan
+                'published_date': DateTime.now().toIso8601String(),
               })
               .select()
               .single();
