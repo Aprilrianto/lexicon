@@ -107,16 +107,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                  _OptionItem(
-                    icon: Icons.history,
-                    title: 'Bacaan Terakhir',
-                    onTap: () {},
-                  ),
-                  _OptionItem(
-                    icon: Icons.menu_book,
-                    title: 'Preferensi Bacaan',
-                    onTap: () {},
-                  ),
                 ]),
                 const SizedBox(height: 20),
                 _buildOptionSection([
