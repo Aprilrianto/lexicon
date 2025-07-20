@@ -124,17 +124,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-void _onBottomNavTapped(int idx) {
-  if (idx == 1) {
-    Navigator.pushNamed(context, '/explore');
-  } else if (idx == 2) {
-    Navigator.pushNamed(context, '/bookmarks');
-  } else if (idx == 3) {
-    Navigator.pushNamed(context, '/profile');
-  } else {
-    setState(() => _bottomNavIndex = idx);
+  void _onBottomNavTapped(int idx) {
+    if (idx == 1) {
+      Navigator.pushNamed(context, '/explore');
+    } else if (idx == 2) {
+      Navigator.pushNamed(context, '/bookmarks');
+    } else if (idx == 3) {
+      Navigator.pushNamed(context, '/profile');
+    } else {
+      setState(() => _bottomNavIndex = idx);
+    }
   }
-}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,7 +145,7 @@ void _onBottomNavTapped(int idx) {
           'Lexicon',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
-        foregroundColor: Colors.deepPurple,
+        foregroundColor: Colors.black,
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -205,7 +206,7 @@ void _onBottomNavTapped(int idx) {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, size: 32),
@@ -259,7 +260,7 @@ void _onBottomNavTapped(int idx) {
               label: Text(category.name),
               selected: isSelected,
               onSelected: (_) => _onCategoryTap(category.id),
-              selectedColor: Colors.deepPurple,
+              selectedColor: Colors.black,
               labelStyle: TextStyle(
                 color: isSelected ? Colors.white : Colors.black,
               ),
@@ -321,7 +322,7 @@ void _onBottomNavTapped(int idx) {
   Widget _bottomItem(IconData icon, String label, int idx) {
     final sel = _bottomNavIndex == idx;
     return IconButton(
-      icon: Icon(icon, color: sel ? Colors.deepPurple : Colors.grey, size: 28),
+      icon: Icon(icon, color: sel ? Colors.black : Colors.grey, size: 28),
       onPressed: () => _onBottomNavTapped(idx),
       tooltip: label,
     );

@@ -18,7 +18,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     "Mystique",
     "Marmut Merah Jambu",
     "The Lord of The Rings",
-    "The Smurf"
+    "The Smurf",
   ];
 
   final List<Map<String, String>> topBooks = [
@@ -56,7 +56,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       appBar: AppBar(
         title: const Text('Eksplor'),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.deepPurple,
+        foregroundColor: Colors.black,
         elevation: 0,
       ),
       body: ListView(
@@ -85,16 +85,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
-            children: recentSearches.map((text) {
-              return Chip(
-                label: Text(text),
-                onDeleted: () {},
-                backgroundColor: Colors.grey[200],
-              );
-            }).toList(),
+            children:
+                recentSearches.map((text) {
+                  return Chip(
+                    label: Text(text),
+                    onDeleted: () {},
+                    backgroundColor: Colors.grey[200],
+                  );
+                }).toList(),
           ),
           const SizedBox(height: 20),
-          const Text('Top Book Search', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'Top Book Search',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 10),
           GridView.builder(
             shrinkWrap: true,
@@ -119,7 +123,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
             },
           ),
           const SizedBox(height: 20),
-          const Text('Top Category Search', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'Top Category Search',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 10),
           if (_loading)
             const Center(child: CircularProgressIndicator())
@@ -137,7 +144,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       CircleAvatar(
                         radius: 24,
                         backgroundColor: Colors.deepPurple.shade100,
-                        child: const Icon(Icons.category, color: Colors.deepPurple),
+                        child: const Icon(
+                          Icons.category,
+                          color: Colors.deepPurple,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(cat['name'], style: const TextStyle(fontSize: 12)),
