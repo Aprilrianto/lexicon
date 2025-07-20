@@ -16,7 +16,8 @@ class NovelService {
   }
 
   Future<int> insert(Novel novel) async {
-    final res = await _client.from('novels').insert(novel.toInsert()).select();
+    // DIPERBAIKI: Menggunakan metode toMap() yang benar
+    final res = await _client.from('novels').insert(novel.toMap()).select();
     return (res.first as Map<String, dynamic>)['id'] as int;
   }
 

@@ -17,12 +17,14 @@ class _DetailScreenState extends State<DetailScreen> {
   bool _isLoadingBookmark = true;
   bool _isLoadingReading = false;
   bool _isSynopsisExpanded = false;
+  late int _currentViewCount;
 
   final supabase = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
+    _currentViewCount = widget.novel.viewCount;
     _checkBookmarkStatus();
   }
 
@@ -123,6 +125,13 @@ class _DetailScreenState extends State<DetailScreen> {
       _isLoadingReading = true;
     });
     try {
+      // Panggil fungsi 'increment_view_count' di Supabase
+      await supabase.rpc(
+        'increment_view_count',
+        params: {'novel_id_to_update': widget.novel.id},
+      );
+
+      // Ambil data novel lengkap untuk memastikan 'isi' ada
       final response =
           await supabase
               .from('novels')
@@ -133,6 +142,10 @@ class _DetailScreenState extends State<DetailScreen> {
       final completeNovel = Novel.fromMap(response);
 
       if (mounted) {
+        // Update UI secara lokal agar angka langsung bertambah
+        setState(() {
+          _currentViewCount++;
+        });
         if (completeNovel.isi != null && completeNovel.isi!.isNotEmpty) {
           Navigator.pushNamed(context, '/read', arguments: completeNovel);
         } else {
@@ -251,6 +264,11 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Widget _buildStatsCard() {
+    String formatViews(int count) {
+      if (count < 1000) return count.toString();
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
@@ -262,9 +280,9 @@ class _DetailScreenState extends State<DetailScreen> {
         children: [
           _StatItem(
             icon: Icons.visibility,
-            value: '159K',
+            value: formatViews(_currentViewCount),
             label: 'Pembaca',
-          ), // Placeholder
+          ),
           _StatItem(
             icon: Icons.menu_book,
             value: widget.novel.chapterCount.toString(),
