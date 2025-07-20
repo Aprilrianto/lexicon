@@ -19,6 +19,7 @@ import 'screens/my_works_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/help_and_feedback_screen.dart';
 import 'screens/notification_screen.dart';
+import 'screens/explore_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,7 +60,7 @@ class MyApp extends StatelessWidget {
         '/settings': (context) => const SettingsScreen(),
         '/help': (context) => const HelpAndFeedbackScreen(),
         '/notifications': (context) => const NotificationScreen(),
-
+        '/explore': (context) => const ExploreScreen(),
         // DIUBAH: Rute ini sekarang mengambil email dari argumen
         '/verificationemail': (context) {
           final email = ModalRoute.of(context)!.settings.arguments as String?;
