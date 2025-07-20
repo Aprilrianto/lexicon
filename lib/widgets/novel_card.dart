@@ -1,3 +1,4 @@
+// DIPERBAIKI: Import yang salah telah dibetulkan
 import 'package:flutter/material.dart';
 import '../models/novel.dart';
 
@@ -8,28 +9,68 @@ class NovelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: novel.coverUrl != null
-                ? Image.network(novel.coverUrl!,
-                    height: 160, width: double.infinity, fit: BoxFit.cover)
-                : Image.asset('assets/default_cover.png',
-                    height: 160, width: double.infinity, fit: BoxFit.cover),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            novel.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Text(novel.author, style: const TextStyle(color: Colors.grey)),
-        ],
+    return Card(
+      // Memberikan bayangan halus dan bentuk yang rapi
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior:
+          Clip.antiAlias, // Memastikan konten di dalam card mengikuti bentuk rounded
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Gambar sampul sekarang fleksibel
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                color:
+                    Colors
+                        .grey[200], // Warna latar belakang jika gambar gagal dimuat
+                child:
+                    novel.coverUrl != null && novel.coverUrl!.isNotEmpty
+                        ? Image.network(
+                          novel.coverUrl!,
+                          fit: BoxFit.cover,
+                          // Menangani error jika gambar tidak bisa dimuat
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.image_not_supported,
+                              color: Colors.grey,
+                            );
+                          },
+                        )
+                        : const Icon(Icons.book, size: 50, color: Colors.grey),
+              ),
+            ),
+            // Area teks dengan padding
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    novel.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    novel.author,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

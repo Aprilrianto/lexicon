@@ -6,6 +6,7 @@ import '../models/novel.dart'; // Impor dari file model yang benar
 import '../widgets/novel_card.dart';
 import 'novel_form_screen.dart';
 import 'detail_screen.dart';
+import 'notification_screen.dart'; // Impor halaman notifikasi
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _isLoading = true;
   String _searchQuery = '';
+  // DIUBAH: Nilai diubah ke false untuk menghilangkan titik merah
+  bool _hasNotification = false;
 
   @override
   void initState() {
@@ -82,11 +85,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _applyFilters() {
     List<Novel> tempNovels = List.from(_novels);
 
-    // DIPERBAIKI: Logika filter disesuaikan dengan model Novel Anda
     if (_selectedCategoryId != null) {
       tempNovels =
           tempNovels.where((novel) {
-            // Langsung bandingkan categoryId dari novel dengan yang dipilih
             return novel.categoryId == _selectedCategoryId;
           }).toList();
     }
@@ -145,6 +146,45 @@ class _HomeScreenState extends State<HomeScreen> {
         foregroundColor: Colors.deepPurple,
         backgroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.notifications_outlined,
+                  color: Colors.black54,
+                  size: 28,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationScreen(),
+                    ),
+                  );
+                },
+                tooltip: 'Notifikasi',
+              ),
+              if (_hasNotification)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 12,
+                      minHeight: 12,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -169,7 +209,6 @@ class _HomeScreenState extends State<HomeScreen> {
         shape: const CircleBorder(),
         child: const Icon(Icons.add, size: 32),
         onPressed: () async {
-          // Navigasi ke form dan muat ulang data jika ada perubahan
           final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const NovelFormScreen()),
