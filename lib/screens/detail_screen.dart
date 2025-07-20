@@ -118,11 +118,8 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
-  // DIUBAH KEMBALI: Logika disederhanakan karena 'isi' sudah ada di model Novel
   void _startReading() {
-    // Cek jika konten 'isi' ada dan tidak kosong
     if (widget.novel.isi != null && widget.novel.isi!.isNotEmpty) {
-      // Langsung navigasi ke halaman baca dengan membawa data novel yang sudah ada
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -130,7 +127,6 @@ class _DetailScreenState extends State<DetailScreen> {
         ),
       );
     } else {
-      // Tampilkan pesan jika konten tidak ditemukan
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Isi cerita untuk novel ini tidak tersedia.'),
@@ -143,21 +139,13 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      // DIUBAH: AppBar sekarang lebih simpel
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          widget.novel.title,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-          overflow: TextOverflow.ellipsis,
         ),
       ),
       body: SingleChildScrollView(
@@ -182,10 +170,10 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
+  // DIUBAH: Widget ini sekarang juga menampilkan judul novel
   Widget _buildCoverAndAuthorInfo() {
     return Column(
       children: [
-        const SizedBox(height: 16),
         Center(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -220,9 +208,16 @@ class _DetailScreenState extends State<DetailScreen> {
           ),
         ),
         const SizedBox(height: 20),
+        // Judul novel sekarang ada di sini
+        Text(
+          widget.novel.title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
         Text(
           'Penulis: ${widget.novel.author}',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: const TextStyle(fontSize: 16, color: Colors.black54),
         ),
         const SizedBox(height: 4),
         Text(
