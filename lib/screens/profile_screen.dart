@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
-import 'my_works_screen.dart'; // Impor halaman "Karya Saya"
+import 'my_works_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -93,8 +93,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 _buildProfileHeader(context, avatarUrl, username, bio),
                 const SizedBox(height: 20),
+                // DIUBAH: Semua opsi sekarang berada dalam satu kartu
                 _buildOptionSection([
-                  // DITAMBAHKAN: Opsi "Karya Saya"
                   _OptionItem(
                     icon: Icons.edit_note_outlined,
                     title: 'Karya Saya',
@@ -107,9 +107,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                ]),
-                const SizedBox(height: 20),
-                _buildOptionSection([
                   _OptionItem(
                     icon: Icons.settings_outlined,
                     title: 'Pengaturan',
@@ -125,11 +122,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _OptionItem(
                     icon: Icons.help_outline,
                     title: 'Bantuan & Umpan Balik',
-                    onTap: () {},
+                    onTap: () {}, // Placeholder
                   ),
-                ]),
-                const SizedBox(height: 20),
-                _buildOptionSection([
                   _OptionItem(
                     icon: Icons.logout,
                     title: 'Logout',
