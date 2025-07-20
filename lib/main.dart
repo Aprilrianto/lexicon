@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lexiconn/models/novel.dart'; // Impor model Novel
 import 'package:lexiconn/screens/admin_dashboard_screen.dart';
 import 'package:lexiconn/screens/edit_profile_admin.dart';
 import 'package:lexiconn/screens/forgot_pasword.dart';
@@ -19,7 +20,6 @@ import 'screens/my_works_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/help_and_feedback_screen.dart';
 import 'screens/notification_screen.dart';
-import 'screens/explore_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,25 +60,23 @@ class MyApp extends StatelessWidget {
         '/settings': (context) => const SettingsScreen(),
         '/help': (context) => const HelpAndFeedbackScreen(),
         '/notifications': (context) => const NotificationScreen(),
-        '/explore': (context) => const ExploreScreen(),
-        // DIUBAH: Rute ini sekarang mengambil email dari argumen
+
         '/verificationemail': (context) {
           final email = ModalRoute.of(context)!.settings.arguments as String?;
           if (email != null) {
             return VerificationEmailScreen(email: email);
           }
-          // Fallback jika tidak ada email, arahkan kembali ke login
           return const LoginScreen();
         },
 
-        // Rute ini menerima data bab (Map)
+        // Rute ini sekarang menerima objek Novel
         '/read': (context) {
           final args = ModalRoute.of(context)!.settings.arguments;
-          if (args is Map<String, dynamic>) {
-            return ChapterReadScreen(chapter: args);
+          if (args is Novel) {
+            return ChapterReadScreen(novel: args);
           } else {
             return const Scaffold(
-              body: Center(child: Text('Data bab tidak valid')),
+              body: Center(child: Text('Data novel tidak valid')),
             );
           }
         },

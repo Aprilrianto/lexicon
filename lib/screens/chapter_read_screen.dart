@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import '../models/novel.dart'; // Impor model Novel
 
 class ChapterReadScreen extends StatelessWidget {
-  // Menerima Map<String, dynamic> yang berisi data satu bab
-  final Map<String, dynamic> chapter;
-  const ChapterReadScreen({super.key, required this.chapter});
+  // Menerima objek Novel
+  final Novel novel;
+  const ChapterReadScreen({super.key, required this.novel});
 
   @override
   Widget build(BuildContext context) {
-    // Mengambil judul dan konten dari data bab yang diterima
-    final title = chapter['title'] as String? ?? 'Judul Bab';
-    final content = chapter['content'] as String? ?? 'Konten tidak tersedia.';
+    // Mengambil judul dan konten dari objek Novel
+    final title = novel.title;
+    final content = novel.isi ?? 'Konten tidak tersedia.';
 
     return Scaffold(
       backgroundColor: Colors.white,

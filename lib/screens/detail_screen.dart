@@ -32,12 +32,7 @@ class _DetailScreenState extends State<DetailScreen> {
     });
     try {
       final userId = supabase.auth.currentUser?.id;
-      if (userId == null) {
-        setState(() {
-          _isLoadingBookmark = false;
-        });
-        return;
-      }
+      if (userId == null) return;
 
       final response =
           await supabase
@@ -50,10 +45,11 @@ class _DetailScreenState extends State<DetailScreen> {
       if (mounted) {
         setState(() {
           _isBookmarked = response != null;
-          _isLoadingBookmark = false;
         });
       }
     } catch (e) {
+      // Handle error
+    } finally {
       if (mounted) {
         setState(() {
           _isLoadingBookmark = false;
@@ -69,9 +65,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Anda harus login untuk menambahkan bookmark.'),
-        ),
+        const SnackBar(content: Text('Anda harus login untuk bookmark.')),
       );
       setState(() {
         _isLoadingBookmark = false;
@@ -129,28 +123,30 @@ class _DetailScreenState extends State<DetailScreen> {
       _isLoadingReading = true;
     });
     try {
-      final firstChapter =
+      final response =
           await supabase
-              .from('chapters')
-              .select()
-              .eq('novel_id', widget.novel.id)
-              .order('created_at', ascending: true)
-              .limit(1)
-              .maybeSingle();
+              .from('novels')
+              .select('*, categories(name)')
+              .eq('id', widget.novel.id)
+              .single();
+
+      final completeNovel = Novel.fromMap(response);
 
       if (mounted) {
-        if (firstChapter != null) {
-          Navigator.pushNamed(context, '/read', arguments: firstChapter);
+        if (completeNovel.isi != null && completeNovel.isi!.isNotEmpty) {
+          Navigator.pushNamed(context, '/read', arguments: completeNovel);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Novel ini belum memiliki bab.')),
+            const SnackBar(
+              content: Text('Isi cerita untuk novel ini tidak tersedia.'),
+            ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat bab: ${e.toString()}')),
+          SnackBar(content: Text('Gagal memuat isi cerita: ${e.toString()}')),
         );
       }
     } finally {
