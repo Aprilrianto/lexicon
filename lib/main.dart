@@ -20,7 +20,7 @@ import 'screens/my_works_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/help_and_feedback_screen.dart';
 import 'screens/notification_screen.dart';
-
+import 'screens/explore_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
@@ -60,7 +60,7 @@ class MyApp extends StatelessWidget {
         '/settings': (context) => const SettingsScreen(),
         '/help': (context) => const HelpAndFeedbackScreen(),
         '/notifications': (context) => const NotificationScreen(),
-
+        '/explore' : (context) => const ExploreScreen(),
         '/verificationemail': (context) {
           final email = ModalRoute.of(context)!.settings.arguments as String?;
           if (email != null) {
