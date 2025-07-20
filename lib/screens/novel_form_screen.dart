@@ -3,11 +3,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/category.dart' as model; // Alias agar tidak bentrok
-import 'write_story_screen.dart'; // Impor halaman tulis cerita
+import '../models/category.dart' as model;
+import '../models/novel.dart'; // Impor model Novel
+import 'write_story_screen.dart';
 
 class NovelFormScreen extends StatefulWidget {
-  const NovelFormScreen({super.key});
+  // Menerima novel yang sudah ada untuk diedit
+  final Novel? existingNovel;
+  const NovelFormScreen({super.key, this.existingNovel});
 
   @override
   State<NovelFormScreen> createState() => _NovelFormScreenState();
@@ -22,13 +25,24 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
   bool _isLoading = false;
   XFile? _selectedImage;
   int? _selectedCategoryId;
-  String _status = 'draft'; // Default status
+  String _status = 'draft';
   List<model.Category> _categories = [];
+  String? _existingCoverUrl;
 
   @override
   void initState() {
     super.initState();
     _fetchCategories();
+    // Jika sedang mengedit, isi form dengan data yang ada
+    if (widget.existingNovel != null) {
+      final novel = widget.existingNovel!;
+      _titleController.text = novel.title;
+      _authorController.text = novel.author;
+      _descriptionController.text = novel.description ?? '';
+      _selectedCategoryId = novel.categoryId;
+      _status = novel.status ?? 'draft';
+      _existingCoverUrl = novel.coverUrl;
+    }
   }
 
   @override
@@ -50,7 +64,7 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
         });
       }
     } catch (e) {
-      // Handle error
+      /* Handle error */
     }
   }
 
@@ -67,10 +81,8 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
     }
   }
 
-  Future<void> _goToNextStep() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+  Future<void> _saveAndProceed() async {
+    if (!_formKey.currentState!.validate()) return;
     setState(() {
       _isLoading = true;
     });
@@ -78,62 +90,76 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
     try {
       final supabase = Supabase.instance.client;
       final user = supabase.auth.currentUser;
-      if (user == null)
-        throw Exception('Anda harus login untuk membuat cerita.');
+      if (user == null) throw Exception('Anda harus login.');
 
-      // DITAMBAHKAN: Menyertakan user_id saat membuat novel
-      final response =
+      String? coverUrl = _existingCoverUrl;
+
+      // Logika untuk membuat atau mengupdate novel
+      if (widget.existingNovel == null) {
+        // --- MEMBUAT NOVEL BARU ---
+        final response =
+            await supabase
+                .from('novels')
+                .insert({
+                  'user_id': user.id,
+                  'title': _titleController.text.trim(),
+                  'author': _authorController.text.trim(),
+                  'description': _descriptionController.text.trim(),
+                  'status': _status,
+                  'category_id': _selectedCategoryId,
+                  'published_date': DateTime.now().toIso8601String(),
+                })
+                .select()
+                .single();
+
+        final newNovelId = response['id'];
+
+        if (_selectedImage != null) {
+          coverUrl = await _uploadCover(user.id, newNovelId, _selectedImage!);
           await supabase
               .from('novels')
-              .insert({
-                'user_id': user.id, // Menghubungkan novel dengan user
-                'title': _titleController.text.trim(),
-                'author': _authorController.text.trim(),
-                'description': _descriptionController.text.trim(),
-                'status': _status,
-                'category_id': _selectedCategoryId,
-                'published_date': DateTime.now().toIso8601String(),
-              })
-              .select()
-              .single();
+              .update({'cover_url': coverUrl})
+              .eq('id', newNovelId);
+        }
 
-      final newNovelId = response['id'];
-      String? coverUrl;
-
-      if (_selectedImage != null) {
-        final imageBytes = await _selectedImage!.readAsBytes();
-        final fileName =
-            '${user.id}_${newNovelId}.${_selectedImage!.name.split('.').last}';
-        await supabase.storage
-            .from('cover')
-            .uploadBinary(
-              fileName,
-              imageBytes,
-              fileOptions: FileOptions(
-                contentType: _selectedImage!.mimeType,
-                upsert: true,
-              ),
-            );
-        coverUrl = supabase.storage.from('cover').getPublicUrl(fileName);
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WriteStoryScreen(novelId: newNovelId),
+            ),
+          );
+        }
+      } else {
+        // --- MENGUPDATE NOVEL YANG ADA ---
+        final novelId = widget.existingNovel!.id;
+        if (_selectedImage != null) {
+          coverUrl = await _uploadCover(user.id, novelId, _selectedImage!);
+        }
 
         await supabase
             .from('novels')
-            .update({'cover_url': coverUrl})
-            .eq('id', newNovelId);
-      }
+            .update({
+              'title': _titleController.text.trim(),
+              'author': _authorController.text.trim(),
+              'description': _descriptionController.text.trim(),
+              'status': _status,
+              'category_id': _selectedCategoryId,
+              'cover_url': coverUrl,
+            })
+            .eq('id', novelId);
 
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => WriteStoryScreen(novelId: newNovelId),
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Detail novel berhasil diperbarui!')),
+          );
+          Navigator.pop(context, true); // Kembali dan beri sinyal untuk refresh
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal membuat cerita: ${e.toString()}')),
+          SnackBar(content: Text('Gagal menyimpan: ${e.toString()}')),
         );
       }
     } finally {
@@ -145,14 +171,34 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
     }
   }
 
+  Future<String> _uploadCover(String userId, int novelId, XFile image) async {
+    final supabase = Supabase.instance.client;
+    final imageBytes = await image.readAsBytes();
+    final fileName = '${userId}_${novelId}.${image.name.split('.').last}';
+    await supabase.storage
+        .from('cover')
+        .uploadBinary(
+          fileName,
+          imageBytes,
+          fileOptions: FileOptions(contentType: image.mimeType, upsert: true),
+        );
+    return supabase.storage.from('cover').getPublicUrl(fileName);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Tentukan teks tombol berdasarkan apakah sedang mengedit atau membuat baru
+    final buttonText =
+        widget.existingNovel == null ? 'Selanjutnya' : 'Simpan Perubahan';
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Tambah Cerita Baru',
-          style: TextStyle(color: Colors.black),
+        title: Text(
+          widget.existingNovel == null
+              ? 'Tambah Cerita Baru'
+              : 'Edit Detail Cerita',
+          style: const TextStyle(color: Colors.black),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -185,11 +231,22 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomActionBar(),
+      bottomNavigationBar: _buildBottomActionBar(buttonText),
     );
   }
 
   Widget _buildCoverPicker() {
+    ImageProvider? imageProvider;
+    if (_selectedImage != null) {
+      imageProvider =
+          (kIsWeb
+                  ? NetworkImage(_selectedImage!.path)
+                  : FileImage(File(_selectedImage!.path)))
+              as ImageProvider;
+    } else if (_existingCoverUrl != null) {
+      imageProvider = NetworkImage(_existingCoverUrl!);
+    }
+
     return Row(
       children: [
         InkWell(
@@ -202,19 +259,12 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
               color: Colors.grey[200],
               borderRadius: BorderRadius.circular(8),
               image:
-                  _selectedImage != null
-                      ? DecorationImage(
-                        image:
-                            (kIsWeb
-                                    ? NetworkImage(_selectedImage!.path)
-                                    : FileImage(File(_selectedImage!.path)))
-                                as ImageProvider,
-                        fit: BoxFit.cover,
-                      )
+                  imageProvider != null
+                      ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
                       : null,
             ),
             child:
-                _selectedImage == null
+                imageProvider == null
                     ? const Center(child: Icon(Icons.add, color: Colors.grey))
                     : null,
           ),
@@ -274,7 +324,7 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
     );
   }
 
-  Widget _buildBottomActionBar() {
+  Widget _buildBottomActionBar(String buttonText) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Row(
@@ -303,7 +353,7 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
-              onPressed: _isLoading ? null : _goToNextStep,
+              onPressed: _isLoading ? null : _saveAndProceed,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,
@@ -318,10 +368,7 @@ class _NovelFormScreenState extends State<NovelFormScreen> {
                         color: Colors.white,
                         strokeWidth: 3,
                       )
-                      : const Text(
-                        'Selanjutnya',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                      : Text(buttonText, style: const TextStyle(fontSize: 16)),
             ),
           ),
         ],

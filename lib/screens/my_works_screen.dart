@@ -3,7 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/novel.dart';
 import '../widgets/novel_card.dart';
 import 'detail_screen.dart';
-// import 'novel_form_screen.dart'; // Uncomment jika ingin ada tombol edit
+import 'novel_form_screen.dart'; // Impor form screen
+import 'write_story_screen.dart'; // Impor write screen
 
 class MyWorksScreen extends StatefulWidget {
   const MyWorksScreen({super.key});
@@ -26,15 +27,11 @@ class _MyWorksScreenState extends State<MyWorksScreen> {
     if (user == null) return [];
 
     try {
-      // DIPERBAIKI: Mengurutkan berdasarkan 'published_date'
       final response = await Supabase.instance.client
           .from('novels')
           .select('*, categories(name)')
           .eq('user_id', user.id)
-          .order(
-            'published_date',
-            ascending: false,
-          ); // Menggunakan kolom yang ada
+          .order('published_date', ascending: false);
 
       return (response as List)
           .map((item) => Novel.fromMap(item as Map<String, dynamic>))
@@ -53,6 +50,181 @@ class _MyWorksScreenState extends State<MyWorksScreen> {
     setState(() {
       _myNovelsFuture = _fetchMyNovels();
     });
+  }
+
+  void _showWorkOptions(BuildContext context, Novel novel) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        if (novel.status == 'draft') {
+          return _buildDraftOptions(ctx, novel);
+        } else {
+          return _buildPublishedOptions(ctx, novel);
+        }
+      },
+    );
+  }
+
+  Widget _buildDraftOptions(BuildContext ctx, Novel novel) {
+    return Wrap(
+      children: <Widget>[
+        ListTile(
+          leading: const Icon(Icons.drive_file_rename_outline),
+          title: const Text('Lanjutkan Menulis'),
+          onTap: () async {
+            Navigator.pop(ctx);
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => WriteStoryScreen(novelId: novel.id),
+              ),
+            );
+            _refreshWorks();
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.edit_document),
+          title: const Text('Edit Detail Novel'),
+          onTap: () async {
+            Navigator.pop(ctx);
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => NovelFormScreen(existingNovel: novel),
+              ),
+            );
+            _refreshWorks();
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.public, color: Colors.green),
+          title: const Text(
+            'Publikasikan',
+            style: TextStyle(color: Colors.green),
+          ),
+          onTap:
+              () => _updateStatus(
+                ctx,
+                novel.id,
+                'published',
+                'Novel berhasil dipublikasikan!',
+              ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.delete_outline, color: Colors.red),
+          title: const Text('Hapus Draft', style: TextStyle(color: Colors.red)),
+          onTap: () => _deleteNovel(ctx, novel.id, 'Draft berhasil dihapus!'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPublishedOptions(BuildContext ctx, Novel novel) {
+    return Wrap(
+      children: <Widget>[
+        ListTile(
+          leading: const Icon(Icons.visibility_outlined),
+          title: const Text('Lihat Detail Publik'),
+          onTap: () {
+            Navigator.pop(ctx);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => DetailScreen(novel: novel)),
+            );
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.edit_document),
+          title: const Text('Edit Detail Novel'),
+          onTap: () async {
+            Navigator.pop(ctx);
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => NovelFormScreen(existingNovel: novel),
+              ),
+            );
+            _refreshWorks();
+          },
+        ),
+        // DITAMBAHKAN: Opsi untuk mengedit isi cerita novel yang sudah publik
+        ListTile(
+          leading: const Icon(Icons.drive_file_rename_outline),
+          title: const Text('Edit Isi Cerita'),
+          onTap: () async {
+            Navigator.pop(ctx);
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => WriteStoryScreen(novelId: novel.id),
+              ),
+            );
+            _refreshWorks();
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.drafts_outlined, color: Colors.orange),
+          title: const Text(
+            'Kembalikan ke Draft',
+            style: TextStyle(color: Colors.orange),
+          ),
+          onTap:
+              () => _updateStatus(
+                ctx,
+                novel.id,
+                'draft',
+                'Novel dikembalikan ke draft.',
+              ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.delete_outline, color: Colors.red),
+          title: const Text('Hapus Novel', style: TextStyle(color: Colors.red)),
+          onTap: () => _deleteNovel(ctx, novel.id, 'Novel berhasil dihapus!'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _updateStatus(
+    BuildContext ctx,
+    int novelId,
+    String newStatus,
+    String message,
+  ) async {
+    try {
+      await Supabase.instance.client
+          .from('novels')
+          .update({'status': newStatus})
+          .eq('id', novelId);
+      Navigator.pop(ctx);
+      _refreshWorks();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> _deleteNovel(
+    BuildContext ctx,
+    int novelId,
+    String message,
+  ) async {
+    try {
+      await Supabase.instance.client.from('novels').delete().eq('id', novelId);
+      Navigator.pop(ctx);
+      _refreshWorks();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      // Handle error
+    }
   }
 
   @override
@@ -95,17 +267,10 @@ class _MyWorksScreenState extends State<MyWorksScreen> {
                   children: [
                     NovelCard(
                       novel: novel,
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DetailScreen(novel: novel),
-                          ),
-                        );
-                        _refreshWorks();
+                      onTap: () {
+                        _showWorkOptions(context, novel);
                       },
                     ),
-                    // Menambahkan label status "Draft"
                     if (novel.status == 'draft')
                       Positioned(
                         top: 8,

@@ -1,3 +1,4 @@
+// DIPERBAIKI: Import yang salah telah dibetulkan
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,6 +13,41 @@ class WriteStoryScreen extends StatefulWidget {
 class _WriteStoryScreenState extends State<WriteStoryScreen> {
   final _contentController = TextEditingController();
   bool _isSaving = false;
+  bool _isLoadingContent = true; // State untuk loading konten
+
+  @override
+  void initState() {
+    super.initState();
+    _loadContent();
+  }
+
+  // Fungsi untuk memuat isi cerita yang sudah ada
+  Future<void> _loadContent() async {
+    try {
+      final response =
+          await Supabase.instance.client
+              .from('novels')
+              .select('isi')
+              .eq('id', widget.novelId)
+              .single();
+
+      if (mounted && response['isi'] != null) {
+        _contentController.text = response['isi'];
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat konten: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingContent = false;
+        });
+      }
+    }
+  }
 
   Future<void> _saveContent() async {
     setState(() {
@@ -38,10 +74,8 @@ class _WriteStoryScreenState extends State<WriteStoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cerita berhasil disimpan!')),
         );
-        // DIUBAH: Menggunakan pushNamedAndRemoveUntil untuk navigasi yang bersih ke home
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil('/home', (route) => false);
+        // Kembali satu halaman (ke halaman "Karya Saya")
+        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
@@ -62,7 +96,7 @@ class _WriteStoryScreenState extends State<WriteStoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tulis Cerita'),
+        title: const Text('Edit Isi Cerita'),
         actions: [
           TextButton(
             onPressed: _isSaving ? null : _saveContent,
@@ -71,19 +105,22 @@ class _WriteStoryScreenState extends State<WriteStoryScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: TextField(
-          controller: _contentController,
-          maxLines: null, // Memungkinkan input teks tidak terbatas
-          expands: true, // Mengisi seluruh ruang yang tersedia
-          keyboardType: TextInputType.multiline,
-          decoration: const InputDecoration(
-            hintText: 'Mulai tulis ceritamu di sini...',
-            border: InputBorder.none,
-          ),
-        ),
-      ),
+      body:
+          _isLoadingContent
+              ? const Center(child: CircularProgressIndicator())
+              : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  controller: _contentController,
+                  maxLines: null,
+                  expands: true,
+                  keyboardType: TextInputType.multiline,
+                  decoration: const InputDecoration(
+                    hintText: 'Mulai tulis ceritamu di sini...',
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
     );
   }
 }
