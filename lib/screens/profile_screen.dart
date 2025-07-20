@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import 'my_works_screen.dart';
+import 'help_and_feedback_screen.dart'; // Impor halaman bantuan
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -93,7 +94,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 _buildProfileHeader(context, avatarUrl, username, bio),
                 const SizedBox(height: 20),
-                // DIUBAH: Semua opsi sekarang berada dalam satu kartu
                 _buildOptionSection([
                   _OptionItem(
                     icon: Icons.edit_note_outlined,
@@ -119,10 +119,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
+                  // DIUBAH: onTap sekarang mengarah ke halaman bantuan
                   _OptionItem(
                     icon: Icons.help_outline,
                     title: 'Bantuan & Umpan Balik',
-                    onTap: () {}, // Placeholder
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HelpAndFeedbackScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _OptionItem(
                     icon: Icons.logout,
