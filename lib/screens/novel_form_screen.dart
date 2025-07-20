@@ -1,19 +1,13 @@
 import 'dart:io';
-import 'dart:typed_data';
-
-import 'package:flutter/foundation.dart'; // kIsWeb
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
-import '../models/novel.dart';
-import '../models/category.dart' as model; // alias agar tidak bentrok
-import '../services/novel_service.dart';
-import '../services/category_service.dart';
-import '../services/strorage_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/category.dart' as model; // Alias agar tidak bentrok
+import 'write_story_screen.dart'; // Impor halaman tulis cerita
 
 class NovelFormScreen extends StatefulWidget {
-  final Novel? existing;
-  const NovelFormScreen({super.key, this.existing});
+  const NovelFormScreen({super.key});
 
   @override
   State<NovelFormScreen> createState() => _NovelFormScreenState();
@@ -21,212 +15,318 @@ class NovelFormScreen extends StatefulWidget {
 
 class _NovelFormScreenState extends State<NovelFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _novelSvc = NovelService();
-  final _catSvc = CategoryService();
+  final _titleController = TextEditingController();
+  final _authorController = TextEditingController();
+  final _descriptionController = TextEditingController();
 
-  late TextEditingController _title;
-  late TextEditingController _author;
-  late TextEditingController _desc;
-  late TextEditingController _isi;
-
-  String _status = 'draft';
-  int? _catId;
-
-  File? _coverFile;
-  XFile? _webPickedFile;
-  Uint8List? _webBytes;
-
-  List<model.Category> _cats = [];
-  bool _saving = false;
+  bool _isLoading = false;
+  XFile? _selectedImage;
+  int? _selectedCategoryId;
+  String _status = 'draft'; // Default status
+  List<model.Category> _categories = [];
 
   @override
   void initState() {
     super.initState();
-    _title = TextEditingController(text: widget.existing?.title ?? '');
-    _author = TextEditingController(text: widget.existing?.author ?? '');
-    _desc = TextEditingController(text: widget.existing?.description ?? '');
-    _isi = TextEditingController(text: widget.existing?.isi ?? '');
-    _status = widget.existing?.status ?? 'draft';
-    _catId = widget.existing?.categoryId;
-    _loadCats();
+    _fetchCategories();
   }
 
   @override
   void dispose() {
-    _title.dispose();
-    _author.dispose();
-    _desc.dispose();
-    _isi.dispose();
+    _titleController.dispose();
+    _authorController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadCats() async {
-    final list = await _catSvc.getAll();
-    if (mounted) setState(() => _cats = list);
+  Future<void> _fetchCategories() async {
+    try {
+      final response =
+          await Supabase.instance.client.from('categories').select();
+      if (mounted) {
+        setState(() {
+          _categories =
+              (response as List).map((e) => model.Category.fromMap(e)).toList();
+        });
+      }
+    } catch (e) {
+      // Handle error
+    }
   }
 
   Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    if (kIsWeb) {
-      _webPickedFile = picked;
-      _webBytes = await picked.readAsBytes();
-    } else {
-      _coverFile = File(picked.path);
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedImage = picked;
+      });
     }
-    if (mounted) setState(() {});
   }
 
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate() || _catId == null) return;
-    setState(() => _saving = true);
+  Future<void> _goToNextStep() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
-      final baseNovel = Novel(
-        id: widget.existing?.id ?? 0,
-        title: _title.text,
-        author: _author.text,
-        description: _desc.text,
-        categoryId: _catId!,
-        status: _status,
-        chapterCount: widget.existing?.chapterCount ?? 0,
-        coverUrl: null,
-        publishedDate: DateTime.now(),
-        isi: _isi.text,
-      );
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+      if (user == null)
+        throw Exception('Anda harus login untuk membuat cerita.');
 
-      if (widget.existing == null) {
-        final newId = await _novelSvc.insert(baseNovel);
+      // DIUBAH: Menambahkan 'published_date' saat membuat novel baru
+      final response =
+          await supabase
+              .from('novels')
+              .insert({
+                'title': _titleController.text.trim(),
+                'author': _authorController.text.trim(),
+                'description': _descriptionController.text.trim(),
+                'status': _status,
+                'category_id': _selectedCategoryId,
+                'published_date':
+                    DateTime.now()
+                        .toIso8601String(), // Tanggal otomatis ditambahkan
+              })
+              .select()
+              .single();
 
-        if (kIsWeb && _webPickedFile != null) {
-          final url = await StorageService.uploadCover(newId, _webPickedFile!);
-          await _novelSvc.update(newId, {'cover_url': url});
-        } else if (!kIsWeb && _coverFile != null) {
-          final url = await StorageService.uploadCover(newId, _coverFile!);
-          await _novelSvc.update(newId, {'cover_url': url});
-        }
-      } else {
-        final id = widget.existing!.id;
-        String? coverUrl = widget.existing!.coverUrl;
+      final newNovelId = response['id'];
+      String? coverUrl;
 
-        if (kIsWeb && _webPickedFile != null) {
-          coverUrl = await StorageService.uploadCover(id, _webPickedFile!);
-        } else if (!kIsWeb && _coverFile != null) {
-          coverUrl = await StorageService.uploadCover(id, _coverFile!);
-        }
+      if (_selectedImage != null) {
+        final imageBytes = await _selectedImage!.readAsBytes();
+        final fileName =
+            '${user.id}_${newNovelId}.${_selectedImage!.name.split('.').last}';
+        await supabase.storage
+            .from('cover')
+            .uploadBinary(
+              fileName,
+              imageBytes,
+              fileOptions: FileOptions(
+                contentType: _selectedImage!.mimeType,
+                upsert: true,
+              ),
+            );
+        coverUrl = supabase.storage.from('cover').getPublicUrl(fileName);
 
-        await _novelSvc.update(id, {
-          ...baseNovel.toInsert(),
-          'cover_url': coverUrl,
-        });
+        await supabase
+            .from('novels')
+            .update({'cover_url': coverUrl})
+            .eq('id', newNovelId);
       }
 
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WriteStoryScreen(novelId: newNovelId),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan: $e')),
+          SnackBar(content: Text('Gagal membuat cerita: ${e.toString()}')),
         );
       }
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(widget.existing == null ? 'Tambah Novel' : 'Edit Novel'),
+        title: const Text(
+          'Tambah Cerita Baru',
+          style: TextStyle(color: Colors.black),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      body: _saving
-          ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: _buildCoverPreview(),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _title,
-                    decoration: const InputDecoration(labelText: 'Judul'),
-                    validator: (v) =>
-                        v == null || v.isEmpty ? 'Judul wajib' : null,
-                  ),
-                  TextFormField(
-                    controller: _author,
-                    decoration: const InputDecoration(labelText: 'Penulis'),
-                    validator: (v) =>
-                        v == null || v.isEmpty ? 'Penulis wajib' : null,
-                  ),
-                  DropdownButtonFormField<int>(
-                    value: _catId,
-                    decoration: const InputDecoration(labelText: 'Kategori'),
-                    items: _cats
-                        .map<DropdownMenuItem<int>>(
-                          (model.Category c) => DropdownMenuItem(
-                            value: c.id,
-                            child: Text(c.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => _catId = v,
-                    validator: (v) => v == null ? 'Pilih kategori' : null,
-                  ),
-                  TextFormField(
-                    controller: _desc,
-                    decoration: const InputDecoration(labelText: 'Sinopsis'),
-                    minLines: 2,
-                    maxLines: 5,
-                  ),
-                  TextFormField(
-                    controller: _isi,
-                    decoration: const InputDecoration(labelText: 'Isi Cerita'),
-                    minLines: 5,
-                    maxLines: 10,
-                    validator: (v) =>
-                        v == null || v.isEmpty ? 'Isi wajib diisi' : null,
-                  ),
-                  DropdownButtonFormField<String>(
-                    value: _status,
-                    decoration: const InputDecoration(labelText: 'Status'),
-                    items: const [
-                      DropdownMenuItem(value: 'draft', child: Text('Draft')),
-                      DropdownMenuItem(
-                          value: 'published', child: Text('Published')),
-                    ],
-                    onChanged: (v) => _status = v ?? 'draft',
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _save,
-                    child: const Text('Simpan'),
-                  ),
-                ],
-              ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(20.0),
+          children: [
+            _buildCoverPicker(),
+            const SizedBox(height: 24),
+            _buildTextField(controller: _titleController, label: 'Judul Novel'),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _authorController,
+              label: 'Nama Penulis',
             ),
+            const SizedBox(height: 16),
+            _buildCategoryDropdown(),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _descriptionController,
+              label: 'Deskripsi Cerita (Sinopsis)',
+              maxLines: 5,
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildBottomActionBar(),
     );
   }
 
-  Widget _buildCoverPreview() {
-    if (kIsWeb && _webBytes != null) {
-      return Image.memory(_webBytes!, height: 180, fit: BoxFit.cover);
-    } else if (!kIsWeb && _coverFile != null) {
-      return Image.file(_coverFile!, height: 180, fit: BoxFit.cover);
-    } else if (widget.existing?.coverUrl != null) {
-      return Image.network(widget.existing!.coverUrl!,
-          height: 180, fit: BoxFit.cover);
-    } else {
-      return Container(
-        height: 180,
-        color: Colors.grey.shade200,
-        child: const Icon(Icons.camera_alt),
-      );
-    }
+  Widget _buildCoverPicker() {
+    return Row(
+      children: [
+        InkWell(
+          onTap: _pickImage,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: 100,
+            height: 140,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+              image:
+                  _selectedImage != null
+                      ? DecorationImage(
+                        image:
+                            (kIsWeb
+                                    ? NetworkImage(_selectedImage!.path)
+                                    : FileImage(File(_selectedImage!.path)))
+                                as ImageProvider,
+                        fit: BoxFit.cover,
+                      )
+                      : null,
+            ),
+            child:
+                _selectedImage == null
+                    ? const Center(child: Icon(Icons.add, color: Colors.grey))
+                    : null,
+          ),
+        ),
+        const SizedBox(width: 16),
+        const Expanded(
+          child: Text(
+            'Tambahkan Sampul',
+            style: TextStyle(fontSize: 16, color: Colors.black54),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    int maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        alignLabelWithHint: true,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      validator:
+          (value) =>
+              value == null || value.isEmpty
+                  ? '$label tidak boleh kosong'
+                  : null,
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    return DropdownButtonFormField<int>(
+      value: _selectedCategoryId,
+      decoration: InputDecoration(
+        labelText: 'Pilih Kategori',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      items:
+          _categories.map((category) {
+            return DropdownMenuItem<int>(
+              value: category.id,
+              child: Text(category.name),
+            );
+          }).toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedCategoryId = value;
+        });
+      },
+      validator: (value) => value == null ? 'Pilih kategori' : null,
+    );
+  }
+
+  Widget _buildBottomActionBar() {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Row(
+        children: [
+          ToggleButtons(
+            isSelected: [_status == 'draft', _status == 'published'],
+            onPressed: (index) {
+              setState(() {
+                _status = index == 0 ? 'draft' : 'published';
+              });
+            },
+            borderRadius: BorderRadius.circular(12),
+            selectedColor: Colors.white,
+            fillColor: Colors.black,
+            children: const [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text('Draft'),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text('Publik'),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _goToNextStep,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child:
+                  _isLoading
+                      ? const CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      )
+                      : const Text(
+                        'Selanjutnya',
+                        style: TextStyle(fontSize: 16),
+                      ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
