@@ -16,7 +16,7 @@ import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/bookmark_screen.dart';
 import 'screens/chapter_read_screen.dart';
-
+import 'screens/explore_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget {
         '/verificationemail': (context) => const VerificationEmailScreen(),
         '/updatepassword': (context) => const UpdatePasswordScreen(),
         '/edit-profile': (context) => const EditProfileAdminScreen(),
-
+        '/explore': (context) => const ExploreScreen(),
         // DIPERBAIKI: Rute '/read' sekarang menerima objek Novel
         '/read': (context) {
           final args = ModalRoute.of(context)!.settings.arguments;

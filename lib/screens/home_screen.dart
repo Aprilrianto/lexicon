@@ -124,16 +124,17 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _onBottomNavTapped(int idx) {
-    if (idx == 2) {
-      Navigator.pushNamed(context, '/bookmarks');
-    } else if (idx == 3) {
-      Navigator.pushNamed(context, '/profile');
-    } else {
-      setState(() => _bottomNavIndex = idx);
-    }
+void _onBottomNavTapped(int idx) {
+  if (idx == 1) {
+    Navigator.pushNamed(context, '/explore');
+  } else if (idx == 2) {
+    Navigator.pushNamed(context, '/bookmarks');
+  } else if (idx == 3) {
+    Navigator.pushNamed(context, '/profile');
+  } else {
+    setState(() => _bottomNavIndex = idx);
   }
-
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
