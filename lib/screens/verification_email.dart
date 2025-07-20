@@ -1,10 +1,10 @@
+import 'dart:async'; // Impor untuk menggunakan Timer
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class VerificationEmailScreen extends StatefulWidget {
-  // DITAMBAHKAN: Properti untuk menerima email dari halaman sebelumnya
   final String email;
   const VerificationEmailScreen({super.key, required this.email});
 
@@ -16,15 +16,46 @@ class VerificationEmailScreen extends StatefulWidget {
 class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
   final _pinController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false; // State untuk loading
+  bool _isLoading = false;
+
+  // DITAMBAHKAN: Variabel untuk countdown timer
+  Timer? _timer;
+  int _countdownSeconds = 60;
+  bool _canResend = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startCountdown(); // Mulai countdown saat halaman dibuka
+  }
 
   @override
   void dispose() {
     _pinController.dispose();
+    _timer?.cancel(); // Batalkan timer untuk mencegah memory leak
     super.dispose();
   }
 
-  // DIUBAH: Logika verifikasi OTP sekarang terhubung ke Supabase
+  // DITAMBAHKAN: Fungsi untuk memulai atau mereset countdown
+  void _startCountdown() {
+    setState(() {
+      _canResend = false;
+      _countdownSeconds = 60;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_countdownSeconds > 0) {
+        setState(() {
+          _countdownSeconds--;
+        });
+      } else {
+        timer.cancel();
+        setState(() {
+          _canResend = true;
+        });
+      }
+    });
+  }
+
   Future<void> _verifyOtp() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) {
@@ -36,13 +67,12 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
 
     try {
       final response = await Supabase.instance.client.auth.verifyOTP(
-        email: widget.email, // Gunakan email yang diterima
+        email: widget.email,
         token: _pinController.text.trim(),
-        type: OtpType.magiclink, // Tipe untuk alur reset password/magic link
+        type: OtpType.magiclink,
       );
 
       if (response.session != null && mounted) {
-        // Jika verifikasi berhasil, arahkan ke halaman update password
         Navigator.pushReplacementNamed(context, '/updatepassword');
       } else {
         if (mounted) {
@@ -81,8 +111,10 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
     }
   }
 
-  // DIUBAH: Logika kirim ulang kode sekarang berfungsi
   Future<void> _resendOtp() async {
+    // Hanya jalankan jika countdown selesai
+    if (!_canResend) return;
+
     try {
       await Supabase.instance.client.auth.signInWithOtp(
         email: widget.email,
@@ -94,6 +126,19 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
             content: Text('Kode verifikasi baru telah dikirim.'),
             backgroundColor: Colors.green,
           ),
+        );
+        _startCountdown(); // Mulai ulang countdown setelah berhasil
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        String errorMessage = 'Gagal mengirim ulang kode.';
+        if (e.message.contains('rate limit')) {
+          errorMessage =
+              'Anda terlalu sering meminta kode. Silakan coba lagi nanti.';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -202,29 +247,39 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
                         const SizedBox(height: 24),
                         Align(
                           alignment: Alignment.center,
-                          child: RichText(
-                            text: TextSpan(
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                              children: [
-                                const TextSpan(
-                                  text: 'Belum menerima kode verifikasi? ',
-                                ),
-                                TextSpan(
-                                  text: 'Kirim ulang',
-                                  style: const TextStyle(
-                                    color: Colors.blue,
-                                    fontWeight: FontWeight.bold,
+                          // DIUBAH: Tampilan teks "Kirim ulang" sekarang dinamis
+                          child:
+                              _canResend
+                                  ? RichText(
+                                    text: TextSpan(
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                      children: [
+                                        const TextSpan(
+                                          text: 'Belum menerima kode? ',
+                                        ),
+                                        TextSpan(
+                                          text: 'Kirim ulang',
+                                          style: const TextStyle(
+                                            color: Colors.blue,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          recognizer:
+                                              TapGestureRecognizer()
+                                                ..onTap = _resendOtp,
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                  : Text(
+                                    'Kirim ulang kode dalam ($_countdownSeconds)',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
-                                  recognizer:
-                                      TapGestureRecognizer()
-                                        ..onTap = _resendOtp,
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                       ],
                     ),

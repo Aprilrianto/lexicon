@@ -121,7 +121,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Kami mengerti kesal saat lupa password. Tenang, isi emailmu di bawah ini. Cuma butuh 2 menit, kak!',
+                          'Kami mengerti kesalnya saat lupa password. Tenang, isi emailmu di bawah ini. Cuma butuh 2 menit, kak!',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],

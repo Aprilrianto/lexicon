@@ -15,6 +15,10 @@ import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/bookmark_screen.dart';
 import 'screens/chapter_read_screen.dart';
+import 'screens/my_works_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/help_and_feedback_screen.dart';
+import 'screens/notification_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,8 +55,22 @@ class MyApp extends StatelessWidget {
         '/forgotpass': (context) => const ForgotPasswordScreen(),
         '/updatepassword': (context) => const UpdatePasswordScreen(),
         '/edit-profile': (context) => const EditProfileAdminScreen(),
+        '/my-works': (context) => const MyWorksScreen(),
+        '/settings': (context) => const SettingsScreen(),
+        '/help': (context) => const HelpAndFeedbackScreen(),
+        '/notifications': (context) => const NotificationScreen(),
 
-        // DIPERBAIKI: Rute '/read' sekarang menerima objek Novel
+        // DIUBAH: Rute ini sekarang mengambil email dari argumen
+        '/verificationemail': (context) {
+          final email = ModalRoute.of(context)!.settings.arguments as String?;
+          if (email != null) {
+            return VerificationEmailScreen(email: email);
+          }
+          // Fallback jika tidak ada email, arahkan kembali ke login
+          return const LoginScreen();
+        },
+
+        // Rute ini menerima data bab (Map)
         '/read': (context) {
           final args = ModalRoute.of(context)!.settings.arguments;
           if (args is Map<String, dynamic>) {

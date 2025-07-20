@@ -225,7 +225,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                             return null;
                           },
                           decoration: _inputDecoration(
-                            hintText: 'Masukkan Passwordmu',
+                            hintText: 'Masukkan Password Baru Kamu',
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _isPasswordVisible
@@ -251,7 +251,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                             return null;
                           },
                           decoration: _inputDecoration(
-                            hintText: 'Konfirmasi Passwordmu',
+                            hintText: 'Konfirmasi Password Baru Kamu',
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _isConfirmPasswordVisible
