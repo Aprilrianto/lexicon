@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lexiconn/models/novel.dart'; // Impor model Novel
 import 'package:lexiconn/screens/admin_dashboard_screen.dart';
 import 'package:lexiconn/screens/edit_profile_admin.dart';
 import 'package:lexiconn/screens/forgot_pasword.dart';
@@ -16,7 +15,7 @@ import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/bookmark_screen.dart';
 import 'screens/chapter_read_screen.dart';
-import 'screens/explore_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
@@ -50,21 +49,17 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfileScreen(),
         '/bookmarks': (context) => const BookmarkScreen(),
         '/forgotpass': (context) => const ForgotPasswordScreen(),
-        '/verificationemail': (context) => const VerificationEmailScreen(),
         '/updatepassword': (context) => const UpdatePasswordScreen(),
         '/edit-profile': (context) => const EditProfileAdminScreen(),
-        '/explore': (context) => const ExploreScreen(),
+
         // DIPERBAIKI: Rute '/read' sekarang menerima objek Novel
         '/read': (context) {
           final args = ModalRoute.of(context)!.settings.arguments;
-          // Cek apakah argumen yang dikirim adalah objek Novel
-          if (args is Novel) {
-            // Kirim objek Novel ke ChapterReadScreen melalui parameter 'novel'
-            return ChapterReadScreen(novel: args);
+          if (args is Map<String, dynamic>) {
+            return ChapterReadScreen(chapter: args);
           } else {
-            // Tampilkan pesan error jika data tidak valid
             return const Scaffold(
-              body: Center(child: Text('Data novel tidak valid')),
+              body: Center(child: Text('Data bab tidak valid')),
             );
           }
         },

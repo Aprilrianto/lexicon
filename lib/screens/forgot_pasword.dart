@@ -19,10 +19,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  Future<void> _sendResetLink() async {
-    // Sembunyikan keyboard
+  // DIUBAH: Fungsi ini sekarang mengirim OTP, bukan link reset
+  Future<void> _sendOtp() async {
     FocusScope.of(context).unfocus();
-
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -32,12 +31,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(
-        _emailController.text.trim(),
+      // Menggunakan signInWithOtp untuk mengirim kode 6 digit
+      await Supabase.instance.client.auth.signInWithOtp(
+        email: _emailController.text.trim(),
+        shouldCreateUser: false, // Penting: jangan buat user baru
       );
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/verificationemail');
+        // Navigasi ke halaman verifikasi dan kirim email yang digunakan sebagai argumen
+        Navigator.pushReplacementNamed(
+          context,
+          '/verificationemail',
+          arguments: _emailController.text.trim(),
+        );
       }
     } on AuthException catch (e) {
       if (mounted) {
@@ -105,7 +111,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 20),
-                        // Judul utama
                         const Text(
                           'Lupa Password?\nTenang, Kami Bantu!',
                           style: TextStyle(
@@ -115,7 +120,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Sub-judul
                         Text(
                           'Kami mengerti kesal saat lupa password. Tenang, isi emailmu di bawah ini. Cuma butuh 2 menit, kak!',
                           style: TextStyle(
@@ -125,7 +129,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        // TextField untuk Email
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
@@ -160,9 +163,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                 ),
               ),
-              // Tombol Kirim Sekarang
               ElevatedButton(
-                onPressed: _isLoading ? null : _sendResetLink,
+                // Memanggil fungsi _sendOtp yang baru
+                onPressed: _isLoading ? null : _sendOtp,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[300],
                   disabledBackgroundColor: Colors.grey[400],
@@ -180,7 +183,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         )
                         : const Text(
-                          'Kirim Sekarang',
+                          // Teks tombol disesuaikan
+                          'Kirim Kode Verifikasi',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -188,7 +192,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         ),
               ),
-              const SizedBox(height: 16), // Padding bawah
+              const SizedBox(height: 16),
             ],
           ),
         ),

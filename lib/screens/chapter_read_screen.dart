@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import '../models/novel.dart'; // Pastikan path ini benar
 
 class ChapterReadScreen extends StatelessWidget {
-  final Novel novel;
-  const ChapterReadScreen({super.key, required this.novel});
+  // Menerima Map<String, dynamic> yang berisi data satu bab
+  final Map<String, dynamic> chapter;
+  const ChapterReadScreen({super.key, required this.chapter});
 
   @override
   Widget build(BuildContext context) {
+    // Mengambil judul dan konten dari data bab yang diterima
+    final title = chapter['title'] as String? ?? 'Judul Bab';
+    final content = chapter['content'] as String? ?? 'Konten tidak tersedia.';
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -17,7 +21,7 @@ class ChapterReadScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          novel.title,
+          title,
           style: const TextStyle(
             color: Colors.black,
             fontSize: 18,
@@ -29,8 +33,7 @@ class ChapterReadScreen extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: SelectableText(
-          // Menampilkan isi cerita dari model Novel
-          novel.isi ?? 'Konten tidak tersedia.',
+          content,
           style: const TextStyle(
             fontSize: 16,
             height: 1.6, // Jarak antar baris untuk kenyamanan membaca

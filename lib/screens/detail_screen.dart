@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/novel.dart'; // Pastikan path ini benar
-import 'chapter_read_screen.dart'; // Impor halaman baca
 
 class DetailScreen extends StatefulWidget {
   final Novel novel;
@@ -16,6 +15,7 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   bool _isBookmarked = false;
   bool _isLoadingBookmark = true;
+  bool _isLoadingReading = false;
   bool _isSynopsisExpanded = false;
 
   final supabase = Supabase.instance.client;
@@ -32,7 +32,12 @@ class _DetailScreenState extends State<DetailScreen> {
     });
     try {
       final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
+      if (userId == null) {
+        setState(() {
+          _isLoadingBookmark = false;
+        });
+        return;
+      }
 
       final response =
           await supabase
@@ -45,11 +50,10 @@ class _DetailScreenState extends State<DetailScreen> {
       if (mounted) {
         setState(() {
           _isBookmarked = response != null;
+          _isLoadingBookmark = false;
         });
       }
     } catch (e) {
-      // Handle error
-    } finally {
       if (mounted) {
         setState(() {
           _isLoadingBookmark = false;
@@ -65,7 +69,9 @@ class _DetailScreenState extends State<DetailScreen> {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Anda harus login untuk bookmark.')),
+        const SnackBar(
+          content: Text('Anda harus login untuk menambahkan bookmark.'),
+        ),
       );
       setState(() {
         _isLoadingBookmark = false;
@@ -118,20 +124,41 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
-  void _startReading() {
-    if (widget.novel.isi != null && widget.novel.isi!.isNotEmpty) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ChapterReadScreen(novel: widget.novel),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Isi cerita untuk novel ini tidak tersedia.'),
-        ),
-      );
+  void _startReading() async {
+    setState(() {
+      _isLoadingReading = true;
+    });
+    try {
+      final firstChapter =
+          await supabase
+              .from('chapters')
+              .select()
+              .eq('novel_id', widget.novel.id)
+              .order('created_at', ascending: true)
+              .limit(1)
+              .maybeSingle();
+
+      if (mounted) {
+        if (firstChapter != null) {
+          Navigator.pushNamed(context, '/read', arguments: firstChapter);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Novel ini belum memiliki bab.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat bab: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingReading = false;
+        });
+      }
     }
   }
 
@@ -139,7 +166,6 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // DIUBAH: AppBar sekarang lebih simpel
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -170,7 +196,6 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  // DIUBAH: Widget ini sekarang juga menampilkan judul novel
   Widget _buildCoverAndAuthorInfo() {
     return Column(
       children: [
@@ -208,7 +233,6 @@ class _DetailScreenState extends State<DetailScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        // Judul novel sekarang ada di sini
         Text(
           widget.novel.title,
           textAlign: TextAlign.center,
@@ -360,7 +384,7 @@ class _DetailScreenState extends State<DetailScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
-              onPressed: _startReading,
+              onPressed: _isLoadingReading ? null : _startReading,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,
@@ -369,10 +393,19 @@ class _DetailScreenState extends State<DetailScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Mulai Baca',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              child:
+                  _isLoadingReading
+                      ? const CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      )
+                      : const Text(
+                        'Mulai Baca',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
             ),
           ),
         ],

@@ -1,9 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class VerificationEmailScreen extends StatefulWidget {
-  const VerificationEmailScreen({super.key});
+  // DITAMBAHKAN: Properti untuk menerima email dari halaman sebelumnya
+  final String email;
+  const VerificationEmailScreen({super.key, required this.email});
 
   @override
   State<VerificationEmailScreen> createState() =>
@@ -13,6 +16,7 @@ class VerificationEmailScreen extends StatefulWidget {
 class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
   final _pinController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false; // State untuk loading
 
   @override
   void dispose() {
@@ -20,34 +24,92 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
     super.dispose();
   }
 
-  // Logika untuk verifikasi kode OTP
-  void _verifyOtp() {
+  // DIUBAH: Logika verifikasi OTP sekarang terhubung ke Supabase
+  Future<void> _verifyOtp() async {
     FocusScope.of(context).unfocus();
-    if (_formKey.currentState!.validate()) {
-      // Kode OTP yang dimasukkan
-      final otp = _pinController.text;
-      print('OTP yang dimasukkan: $otp');
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+    });
 
-      // DIUBAH: Navigasi ke halaman selanjutnya jika verifikasi berhasil
-      // Pastikan Anda memiliki halaman untuk rute '/update-password'
-      Navigator.pushReplacementNamed(context, '/updatepassword');
+    try {
+      final response = await Supabase.instance.client.auth.verifyOTP(
+        email: widget.email, // Gunakan email yang diterima
+        token: _pinController.text.trim(),
+        type: OtpType.magiclink, // Tipe untuk alur reset password/magic link
+      );
+
+      if (response.session != null && mounted) {
+        // Jika verifikasi berhasil, arahkan ke halaman update password
+        Navigator.pushReplacementNamed(context, '/updatepassword');
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kode verifikasi salah atau sudah kedaluwarsa.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  // TODO: Tambahkan logika untuk kirim ulang kode
-  void _resendOtp() {
-    print('Mengirim ulang kode OTP...');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Kode verifikasi baru telah dikirim.'),
-        backgroundColor: Colors.green,
-      ),
-    );
+  // DIUBAH: Logika kirim ulang kode sekarang berfungsi
+  Future<void> _resendOtp() async {
+    try {
+      await Supabase.instance.client.auth.signInWithOtp(
+        email: widget.email,
+        shouldCreateUser: false,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kode verifikasi baru telah dikirim.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengirim ulang kode: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Tema default untuk Pinput
     final defaultPinTheme = PinTheme(
       width: 56,
       height: 60,
@@ -100,7 +162,6 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 20),
-                        // Judul utama
                         const Text(
                           'Cek Email Kamu untuk Kode Verifikasi!',
                           style: TextStyle(
@@ -110,9 +171,8 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Sub-judul
                         Text(
-                          'Masukkan 6 digit kode verifikasi',
+                          'Masukkan 6 digit kode verifikasi yang dikirimkan ke ${widget.email}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -120,7 +180,6 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        // Field input OTP menggunakan Pinput
                         Center(
                           child: Pinput(
                             controller: _pinController,
@@ -141,7 +200,6 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        // Link untuk kirim ulang kode
                         Align(
                           alignment: Alignment.center,
                           child: RichText(
@@ -173,27 +231,34 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
                   ),
                 ),
               ),
-              // Tombol Selanjutnya
               ElevatedButton(
-                onPressed: _verifyOtp,
+                onPressed: _isLoading ? null : _verifyOtp,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[300],
+                  disabledBackgroundColor: Colors.grey[400],
                   elevation: 0,
                   minimumSize: const Size(double.infinity, 58),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Selanjutnya',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black54,
-                  ),
-                ),
+                child:
+                    _isLoading
+                        ? const CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.black54,
+                          ),
+                        )
+                        : const Text(
+                          'Selanjutnya',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black54,
+                          ),
+                        ),
               ),
-              const SizedBox(height: 16), // Padding bawah
+              const SizedBox(height: 16),
             ],
           ),
         ),

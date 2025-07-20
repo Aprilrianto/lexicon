@@ -24,96 +24,8 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
     super.dispose();
   }
 
-  // Fungsi untuk menampilkan dialog sukses
-  Future<void> _showSuccessDialog() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // Pengguna harus menekan tombol
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              // Tombol close di kanan atas
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Tutup dialog
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/login',
-                      (route) => false,
-                    ); // Lalu navigasi
-                  },
-                ),
-              ),
-              // Ikon sukses
-              Icon(
-                Icons.check_circle_outline, // Ikon placeholder
-                color: Colors.green,
-                size: 80,
-              ),
-              const SizedBox(height: 24),
-              // Teks utama
-              const Text(
-                'Password Anda Sudah Diperbarui!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              // Teks sub-judul
-              Text(
-                'Yeay! Password baru Anda sudah siap digunakan. Jangan lupa untuk merahasiakannya, ya!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 24),
-              // Tombol Selesai
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Tutup dialog
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/login',
-                      (route) => false,
-                    ); // Lalu navigasi
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[300],
-                    elevation: 0,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Selesai',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Future<void> _updatePassword() async {
-    // Sembunyikan keyboard
     FocusScope.of(context).unfocus();
-
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -128,7 +40,6 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
       );
 
       if (mounted) {
-        // DIUBAH: Menampilkan dialog sukses, bukan SnackBar
         _showSuccessDialog();
       }
     } on AuthException catch (e) {
@@ -156,6 +67,94 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
         });
       }
     }
+  }
+
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
+                  },
+                ),
+              ),
+              // Menggunakan ikon placeholder sesuai gambar
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.check, color: Colors.green, size: 50),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Password Anda Sudah Diperbarui!',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Yeay! Password baru Anda sudah siap digunakan. Jangan lupa untuk merahasiakannya, ya!',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey[300],
+                    elevation: 0,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Selesai',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -197,7 +196,6 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 20),
-                        // Judul utama
                         const Text(
                           'Buat Password Baru\nyang Lebih Kuat!',
                           style: TextStyle(
@@ -207,7 +205,6 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Sub-judul
                         Text(
                           'Buat password baru yang unik dan mudah diingat!',
                           style: TextStyle(
@@ -217,17 +214,14 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        // Password Baru
                         TextFormField(
                           controller: _passwordController,
                           obscureText: !_isPasswordVisible,
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
+                            if (value == null || value.isEmpty)
                               return 'Password tidak boleh kosong';
-                            }
-                            if (value.length < 6) {
+                            if (value.length < 6)
                               return 'Password minimal 6 karakter';
-                            }
                             return null;
                           },
                           decoration: _inputDecoration(
@@ -237,28 +231,23 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                                 _isPasswordVisible
                                     ? Icons.visibility_outlined
                                     : Icons.visibility_off_outlined,
-                                color: Colors.grey[600],
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _isPasswordVisible = !_isPasswordVisible;
-                                });
-                              },
+                              onPressed:
+                                  () => setState(
+                                    () =>
+                                        _isPasswordVisible =
+                                            !_isPasswordVisible,
+                                  ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Konfirmasi Password Baru
                         TextFormField(
                           controller: _confirmPasswordController,
                           obscureText: !_isConfirmPasswordVisible,
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Konfirmasi password tidak boleh kosong';
-                            }
-                            if (value != _passwordController.text) {
+                            if (value != _passwordController.text)
                               return 'Password tidak cocok';
-                            }
                             return null;
                           },
                           decoration: _inputDecoration(
@@ -268,14 +257,13 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                                 _isConfirmPasswordVisible
                                     ? Icons.visibility_outlined
                                     : Icons.visibility_off_outlined,
-                                color: Colors.grey[600],
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _isConfirmPasswordVisible =
-                                      !_isConfirmPasswordVisible;
-                                });
-                              },
+                              onPressed:
+                                  () => setState(
+                                    () =>
+                                        _isConfirmPasswordVisible =
+                                            !_isConfirmPasswordVisible,
+                                  ),
                             ),
                           ),
                         ),
@@ -284,7 +272,6 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                   ),
                 ),
               ),
-              // Tombol Selanjutnya
               ElevatedButton(
                 onPressed: _isLoading ? null : _updatePassword,
                 style: ElevatedButton.styleFrom(
@@ -312,7 +299,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                           ),
                         ),
               ),
-              const SizedBox(height: 16), // Padding bawah
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -320,7 +307,6 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
     );
   }
 
-  // Helper untuk styling input field
   InputDecoration _inputDecoration({
     required String hintText,
     Widget? suffixIcon,
