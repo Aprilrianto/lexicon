@@ -18,6 +18,9 @@ class _DetailScreenState extends State<DetailScreen> {
   bool _isLoadingReading = false;
   bool _isSynopsisExpanded = false;
   late int _currentViewCount;
+  late double _currentAverageRating;
+  late int _totalRatingsCount;
+  bool _userHasRated = false;
 
   final supabase = Supabase.instance.client;
 
@@ -25,10 +28,12 @@ class _DetailScreenState extends State<DetailScreen> {
   void initState() {
     super.initState();
     _currentViewCount = widget.novel.viewCount;
-    _checkBookmarkStatus();
+    _currentAverageRating = widget.novel.averageRating;
+    _totalRatingsCount = widget.novel.totalRatings;
+    _loadInitialStatus();
   }
 
-  Future<void> _checkBookmarkStatus() async {
+  Future<void> _loadInitialStatus() async {
     setState(() {
       _isLoadingBookmark = true;
     });
@@ -36,9 +41,16 @@ class _DetailScreenState extends State<DetailScreen> {
       final userId = supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      final response =
+      final bookmarkRes =
           await supabase
               .from('bookmarks')
+              .select('id')
+              .eq('user_id', userId)
+              .eq('novel_id', widget.novel.id)
+              .maybeSingle();
+      final ratingRes =
+          await supabase
+              .from('ratings')
               .select('id')
               .eq('user_id', userId)
               .eq('novel_id', widget.novel.id)
@@ -46,7 +58,8 @@ class _DetailScreenState extends State<DetailScreen> {
 
       if (mounted) {
         setState(() {
-          _isBookmarked = response != null;
+          _isBookmarked = bookmarkRes != null;
+          _userHasRated = ratingRes != null;
         });
       }
     } catch (e) {
@@ -87,7 +100,6 @@ class _DetailScreenState extends State<DetailScreen> {
           'novel_id': widget.novel.id,
         });
       }
-
       if (mounted) {
         setState(() {
           _isBookmarked = !_isBookmarked;
@@ -125,24 +137,19 @@ class _DetailScreenState extends State<DetailScreen> {
       _isLoadingReading = true;
     });
     try {
-      // Panggil fungsi 'increment_view_count' di Supabase
       await supabase.rpc(
         'increment_view_count',
         params: {'novel_id_to_update': widget.novel.id},
       );
-
-      // Ambil data novel lengkap untuk memastikan 'isi' ada
       final response =
           await supabase
               .from('novels')
               .select('*, categories(name)')
               .eq('id', widget.novel.id)
               .single();
-
       final completeNovel = Novel.fromMap(response);
 
       if (mounted) {
-        // Update UI secara lokal agar angka langsung bertambah
         setState(() {
           _currentViewCount++;
         });
@@ -167,6 +174,98 @@ class _DetailScreenState extends State<DetailScreen> {
         setState(() {
           _isLoadingReading = false;
         });
+      }
+    }
+  }
+
+  Future<void> _showRatingDialog() async {
+    int? userRating;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Beri Rating Novel Ini'),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      Icons.star,
+                      color:
+                          (userRating ?? 0) >= index + 1
+                              ? Colors.amber
+                              : Colors.grey,
+                    ),
+                    onPressed: () {
+                      setDialogState(() {
+                        userRating = index + 1;
+                      });
+                    },
+                  );
+                }),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Batal'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                TextButton(
+                  child: const Text('Kirim'),
+                  onPressed: () {
+                    if (userRating != null) {
+                      _submitRating(userRating!);
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _submitRating(int rating) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Anda harus login untuk memberi rating.')),
+      );
+      return;
+    }
+
+    try {
+      await supabase.from('ratings').upsert({
+        'user_id': userId,
+        'novel_id': widget.novel.id,
+        'rating': rating,
+      }, onConflict: 'user_id, novel_id');
+
+      final updatedNovelData =
+          await supabase
+              .from('novels')
+              .select('average_rating, total_ratings')
+              .eq('id', widget.novel.id)
+              .single();
+      if (mounted) {
+        setState(() {
+          _currentAverageRating =
+              (updatedNovelData['average_rating'] as num?)?.toDouble() ?? 0.0;
+          _totalRatingsCount = updatedNovelData['total_ratings'] ?? 0;
+          _userHasRated = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Terima kasih atas rating Anda!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengirim rating: ${e.toString()}')),
+        );
       }
     }
   }
@@ -278,6 +377,16 @@ class _DetailScreenState extends State<DetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
+          GestureDetector(
+            onTap: _showRatingDialog,
+            child: _StatItem(
+              icon: Icons.star,
+              value:
+                  '${_currentAverageRating.toStringAsFixed(1)} ($_totalRatingsCount)',
+              label: 'Rating',
+              iconColor: _userHasRated ? Colors.amber : Colors.black87,
+            ),
+          ),
           _StatItem(
             icon: Icons.visibility,
             value: formatViews(_currentViewCount),
@@ -432,17 +541,20 @@ class _StatItem extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
+  final Color? iconColor;
+
   const _StatItem({
     required this.icon,
     required this.value,
     required this.label,
+    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: Colors.black87, size: 28),
+        Icon(icon, color: iconColor ?? Colors.black87, size: 28),
         const SizedBox(height: 4),
         Text(
           value,

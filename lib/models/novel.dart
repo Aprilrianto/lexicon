@@ -8,11 +8,13 @@ class Novel {
   final String? coverUrl;
   final DateTime? publishedDate;
   final int? categoryId;
-  final String? categoryName; // Dari join dengan tabel categories
-  final String? status; // 'draft' atau 'published'
+  final String? categoryName;
+  final String? status;
   final int chapterCount;
-  final String? isi; // Isi cerita lengkap
-  final int viewCount; // Jumlah pembaca
+  final String? isi;
+  final int viewCount;
+  final double averageRating;
+  final int totalRatings; // DITAMBAHKAN: Properti untuk total perating
 
   Novel({
     required this.id,
@@ -27,9 +29,10 @@ class Novel {
     required this.chapterCount,
     this.isi,
     required this.viewCount,
+    required this.averageRating,
+    required this.totalRatings, // DITAMBAHKAN
   });
 
-  // Factory constructor yang disempurnakan untuk membuat objek Novel dari data Supabase
   factory Novel.fromMap(Map<String, dynamic> map) {
     return Novel(
       id: map['id'] ?? 0,
@@ -42,16 +45,16 @@ class Novel {
               ? DateTime.tryParse(map['published_date'])
               : null,
       categoryId: map['category_id'],
-      // Mengambil nama kategori dari relasi, jika ada
       categoryName: (map['categories'] as Map<String, dynamic>?)?['name'],
       status: map['status'],
       chapterCount: map['chapter_count'] ?? 0,
       isi: map['isi'],
       viewCount: map['view_count'] ?? 0,
+      averageRating: (map['average_rating'] as num?)?.toDouble() ?? 0.0,
+      totalRatings: map['total_ratings'] ?? 0, // DITAMBAHKAN
     );
   }
 
-  // Method untuk mengubah objek menjadi Map, berguna untuk INSERT/UPDATE
   Map<String, dynamic> toMap() => {
     'title': title,
     'author': author,
@@ -63,5 +66,7 @@ class Novel {
     'cover_url': coverUrl,
     'isi': isi,
     'view_count': viewCount,
+    'average_rating': averageRating,
+    'total_ratings': totalRatings,
   };
 }
