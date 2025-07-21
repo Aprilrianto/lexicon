@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Izin untuk mengakses internet -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:label="lexiconn"
         android:name="${applicationName}"
