@@ -19,7 +19,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  // DIUBAH: Fungsi ini sekarang mengirim OTP, bukan link reset
   Future<void> _sendOtp() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) {
@@ -31,14 +30,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      // Menggunakan signInWithOtp untuk mengirim kode 6 digit
       await Supabase.instance.client.auth.signInWithOtp(
         email: _emailController.text.trim(),
-        shouldCreateUser: false, // Penting: jangan buat user baru
+        shouldCreateUser: false,
       );
 
       if (mounted) {
-        // Navigasi ke halaman verifikasi dan kirim email yang digunakan sebagai argumen
         Navigator.pushReplacementNamed(
           context,
           '/verificationemail',
@@ -75,6 +72,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // DITAMBAHKAN: Properti ini mencegah layout naik saat keyboard muncul
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -164,7 +163,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               ElevatedButton(
-                // Memanggil fungsi _sendOtp yang baru
                 onPressed: _isLoading ? null : _sendOtp,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[300],
@@ -183,7 +181,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         )
                         : const Text(
-                          // Teks tombol disesuaikan
                           'Kirim Kode Verifikasi',
                           style: TextStyle(
                             fontSize: 16,

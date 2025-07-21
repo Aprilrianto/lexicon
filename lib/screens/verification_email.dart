@@ -18,7 +18,6 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  // DITAMBAHKAN: Variabel untuk countdown timer
   Timer? _timer;
   int _countdownSeconds = 60;
   bool _canResend = false;
@@ -26,17 +25,16 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
   @override
   void initState() {
     super.initState();
-    _startCountdown(); // Mulai countdown saat halaman dibuka
+    _startCountdown();
   }
 
   @override
   void dispose() {
     _pinController.dispose();
-    _timer?.cancel(); // Batalkan timer untuk mencegah memory leak
+    _timer?.cancel();
     super.dispose();
   }
 
-  // DITAMBAHKAN: Fungsi untuk memulai atau mereset countdown
   void _startCountdown() {
     setState(() {
       _canResend = false;
@@ -112,7 +110,6 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
   }
 
   Future<void> _resendOtp() async {
-    // Hanya jalankan jika countdown selesai
     if (!_canResend) return;
 
     try {
@@ -127,7 +124,7 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        _startCountdown(); // Mulai ulang countdown setelah berhasil
+        _startCountdown();
       }
     } on AuthException catch (e) {
       if (mounted) {
@@ -171,6 +168,8 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
     );
 
     return Scaffold(
+      // DITAMBAHKAN: Properti ini mencegah layout naik saat keyboard muncul
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -247,7 +246,6 @@ class _VerificationEmailScreenState extends State<VerificationEmailScreen> {
                         const SizedBox(height: 24),
                         Align(
                           alignment: Alignment.center,
-                          // DIUBAH: Tampilan teks "Kirim ulang" sekarang dinamis
                           child:
                               _canResend
                                   ? RichText(

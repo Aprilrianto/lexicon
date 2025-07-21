@@ -98,7 +98,6 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                   },
                 ),
               ),
-              // Menggunakan ikon placeholder sesuai gambar
               Container(
                 width: 80,
                 height: 80,
@@ -160,6 +159,8 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // DITAMBAHKAN: Properti ini mencegah layout naik saat keyboard muncul
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -225,7 +226,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                             return null;
                           },
                           decoration: _inputDecoration(
-                            hintText: 'Masukkan Password Baru Kamu',
+                            hintText: 'Masukkan Passwordmu',
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _isPasswordVisible
@@ -251,7 +252,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                             return null;
                           },
                           decoration: _inputDecoration(
-                            hintText: 'Konfirmasi Password Baru Kamu',
+                            hintText: 'Konfirmasi Passwordmu',
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _isConfirmPasswordVisible

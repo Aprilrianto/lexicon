@@ -19,6 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  bool _isLoading = false; // State untuk loading
 
   @override
   void dispose() {
@@ -30,26 +31,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _register() async {
-    // Sembunyikan keyboard
     FocusScope.of(context).unfocus();
-
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    if (_passwordController.text != _confirmPasswordController.text) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password konfirmasi tidak cocok.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return;
-    }
-
-    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final res = await Supabase.instance.client.auth.signUp(
@@ -60,7 +49,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       final user = res.user;
       if (user != null && mounted) {
-        // Simpan username di tabel 'profiles'
         await Supabase.instance.client.from('profiles').upsert({
           'id': user.id,
           'username': _usernameController.text.trim(),
@@ -73,40 +61,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
         Navigator.pushReplacementNamed(context, '/login');
-      } else if (mounted) {
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registrasi gagal.'),
+          SnackBar(
+            content: Text('Error: ${e.message}'),
             backgroundColor: Colors.red,
           ),
         );
       }
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.message}'),
-          backgroundColor: Colors.red,
-        ),
-      );
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Terjadi kesalahan: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // DITAMBAHKAN: Properti ini mencegah layout naik saat keyboard muncul
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // DIUBAH: centerTitle diatur ke false agar judul rata kiri
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -158,7 +148,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        // Username
                         _buildTextFormField(
                           controller: _usernameController,
                           hintText: 'Masukkan Username',
@@ -171,7 +160,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        // Email
                         _buildTextFormField(
                           controller: _emailController,
                           hintText: 'Masukkan Email Kamu',
@@ -188,7 +176,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        // Password
                         _buildTextFormField(
                           controller: _passwordController,
                           hintText: 'Masukkan Password Kamu',
@@ -218,7 +205,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        // Konfirmasi Password
                         _buildTextFormField(
                           controller: _confirmPasswordController,
                           hintText: 'Konfirmasi Password Kamu',
@@ -239,95 +225,71 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             },
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Konfirmasi password tidak boleh kosong';
-                            }
                             if (value != _passwordController.text) {
                               return 'Password tidak cocok';
                             }
                             return null;
                           },
                         ),
+                        const SizedBox(height: 40),
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _register,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            disabledBackgroundColor: Colors.grey.shade400,
+                            minimumSize: const Size(double.infinity, 58),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child:
+                              _isLoading
+                                  ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                  : const Text(
+                                    'Daftar',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                        ),
                         const SizedBox(height: 24),
                         Center(
-                          child: Text(
-                            'Daftar dengan',
-                            style: TextStyle(color: Colors.grey[600]),
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                              children: [
+                                const TextSpan(text: 'Sudah memiliki akun? '),
+                                TextSpan(
+                                  text: 'Masuk',
+                                  style: const TextStyle(
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  recognizer:
+                                      TapGestureRecognizer()
+                                        ..onTap =
+                                            () =>
+                                                Navigator.pushReplacementNamed(
+                                                  context,
+                                                  '/login',
+                                                ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Tombol Google
-                        _buildSocialButton(
-                          onPressed: () {
-                            /* TODO: Implement Google Sign-In */
-                          },
-                          iconAsset: 'assets/google.png',
-                          label: 'Masuk dengan Google',
-                        ),
-                        const SizedBox(height: 12),
-                        // Tombol Facebook
-                        _buildSocialButton(
-                          onPressed: () {
-                            /* TODO: Implement Facebook Sign-In */
-                          },
-                          iconAsset: 'assets/github.png',
-                          label: 'Masuk dengan Github',
                         ),
                       ],
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              // Link ke Halaman Masuk
-              Center(
-                child: RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                    children: [
-                      const TextSpan(text: 'Sudah memiliki akun? '),
-                      TextSpan(
-                        text: 'Masuk',
-                        style: const TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        recognizer:
-                            TapGestureRecognizer()
-                              ..onTap = () {
-                                Navigator.pushReplacementNamed(
-                                  context,
-                                  '/login',
-                                );
-                              },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Tombol Daftar
-              ElevatedButton(
-                onPressed: _register,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  elevation: 0,
-                  minimumSize: const Size(double.infinity, 58),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Daftar',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black54,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -335,7 +297,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Helper widget untuk TextFormField
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
@@ -361,31 +322,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           borderSide: BorderSide.none,
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 18),
-      ),
-    );
-  }
-
-  // Helper widget untuk tombol social
-  Widget _buildSocialButton({
-    required VoidCallback onPressed,
-    required String iconAsset,
-    required String label,
-  }) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Image.asset(iconAsset, height: 22),
-      label: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.black87,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.grey[100],
-        elevation: 0,
-        minimumSize: const Size(double.infinity, 58),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

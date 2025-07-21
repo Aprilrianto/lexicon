@@ -82,6 +82,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     // UI Anda tetap sama persis, hanya tombol "Masuk" yang disesuaikan
     return Scaffold(
+      // DITAMBAHKAN: Properti ini mencegah layout naik saat keyboard muncul
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
