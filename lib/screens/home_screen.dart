@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/category.dart';
-import '../models/novel.dart'; // Impor dari file model yang benar
+import '../models/novel.dart';
 import '../widgets/novel_card.dart';
 import 'novel_form_screen.dart';
 import 'detail_screen.dart';
-import 'notification_screen.dart'; // Impor halaman notifikasi
+import 'notification_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _isLoading = true;
   String _searchQuery = '';
-  // DIUBAH: Nilai diubah ke false untuk menghilangkan titik merah
   bool _hasNotification = false;
 
   @override
@@ -35,14 +34,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchData() async {
-    setState(() {
-      _isLoading = true;
-    });
+    // Tidak perlu setState di sini karena FutureBuilder akan menangani loading state
     await _fetchCategories();
     await _fetchNovels();
-    setState(() {
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -51,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           _categories =
-              (res as List<dynamic>)
+              (res as List)
                   .map((e) => Category.fromMap(e as Map<String, dynamic>))
                   .toList();
         });
@@ -71,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           _novels =
-              (res as List<dynamic>)
+              (res as List)
                   .map((e) => Novel.fromMap(e as Map<String, dynamic>))
                   .toList();
           _applyFilters();
@@ -124,6 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // DIUBAH: Navigasi ke '/explore' sekarang diaktifkan
   void _onBottomNavTapped(int idx) {
     if (idx == 1) {
       Navigator.pushNamed(context, '/explore');
@@ -189,20 +189,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildSearchBar(),
-            _buildCategoryChips(),
-            const SizedBox(height: 12),
-            Expanded(
-              child:
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _filteredNovels.isEmpty
-                      ? const Center(child: Text('Novel tidak ditemukan.'))
-                      : _buildNovelGrid(),
-            ),
-          ],
+        child: RefreshIndicator(
+          onRefresh: _fetchData,
+          child: Column(
+            children: [
+              _buildSearchBar(),
+              _buildCategoryChips(),
+              const SizedBox(height: 12),
+              Expanded(
+                child:
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _filteredNovels.isEmpty
+                        ? const Center(child: Text('Novel tidak ditemukan.'))
+                        : _buildNovelGrid(),
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -277,7 +280,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNovelGrid() {
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 0.6,

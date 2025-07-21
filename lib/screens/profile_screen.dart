@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edit_profile_screen.dart';
 import 'settings_screen.dart';
 import 'my_works_screen.dart';
-import 'help_and_feedback_screen.dart'; // Impor halaman bantuan
+import 'help_and_feedback_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -39,6 +39,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _profileFuture = _loadProfile();
     });
+  }
+
+  // DITAMBAHKAN: Fungsi untuk menampilkan dialog konfirmasi logout
+  Future<void> _showLogoutConfirmationDialog() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Logout'),
+          content: const Text('Apakah Anda yakin ingin keluar dari akun Anda?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Batal'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Logout'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+                _logout(); // Lanjutkan proses logout
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _logout() async {
@@ -119,7 +148,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                  // DIUBAH: onTap sekarang mengarah ke halaman bantuan
                   _OptionItem(
                     icon: Icons.help_outline,
                     title: 'Bantuan & Umpan Balik',
@@ -135,7 +163,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _OptionItem(
                     icon: Icons.logout,
                     title: 'Logout',
-                    onTap: _logout,
+                    // DIUBAH: onTap sekarang memanggil dialog konfirmasi
+                    onTap: _showLogoutConfirmationDialog,
                     color: Colors.red,
                   ),
                 ]),
@@ -232,7 +261,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: TextStyle(color: item.color ?? Colors.black87),
                     ),
                     trailing:
-                        item.onTap != _logout
+                        item.onTap != _logout &&
+                                item.onTap != _showLogoutConfirmationDialog
                             ? const Icon(Icons.arrow_forward_ios, size: 16)
                             : null,
                     onTap: item.onTap,

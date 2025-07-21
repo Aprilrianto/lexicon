@@ -1,4 +1,3 @@
-// DIPERBAIKI: Import yang salah telah dibetulkan
 import 'package:flutter/material.dart';
 import '../models/novel.dart';
 
@@ -21,7 +20,7 @@ class NovelCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Gambar sampul sekarang fleksibel
+            // Gambar sampul dibuat fleksibel dengan Expanded agar tidak terpotong
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -44,7 +43,7 @@ class NovelCard extends StatelessWidget {
                         : const Icon(Icons.book, size: 50, color: Colors.grey),
               ),
             ),
-            // Area teks dengan padding
+            // Area teks dengan padding yang rapi
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
