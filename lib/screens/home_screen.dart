@@ -138,7 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // DITAMBAHKAN: Properti ini mencegah layout naik saat keyboard muncul
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -146,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'Lexicon',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.black, // Warna dikembalikan
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -191,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: _fetchData,
+          onRefresh: _fetchData, // Fungsi refresh dipanggil di sini
           child: Column(
             children: [
               _buildSearchBar(),
@@ -210,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.black, // Warna dikembalikan
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, size: 32),
@@ -264,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
               label: Text(category.name),
               selected: isSelected,
               onSelected: (_) => _onCategoryTap(category.id),
-              selectedColor: Colors.black,
+              selectedColor: Colors.black, // Warna dikembalikan
               labelStyle: TextStyle(
                 color: isSelected ? Colors.white : Colors.black,
               ),
@@ -281,6 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNovelGrid() {
     return GridView.builder(
+      // Menambahkan physics agar bisa di-scroll bahkan saat item sedikit
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -327,7 +327,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _bottomItem(IconData icon, String label, int idx) {
     final sel = _bottomNavIndex == idx;
     return IconButton(
-      icon: Icon(icon, color: sel ? Colors.black : Colors.grey, size: 28),
+      icon: Icon(
+        icon,
+        color: sel ? Colors.black : Colors.grey,
+        size: 28,
+      ), // Warna dikembalikan
       onPressed: () => _onBottomNavTapped(idx),
       tooltip: label,
     );

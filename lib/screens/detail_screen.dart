@@ -21,6 +21,7 @@ class _DetailScreenState extends State<DetailScreen> {
   late double _currentAverageRating;
   late int _totalRatingsCount;
   bool _userHasRated = false;
+  bool _userHasViewed = false;
 
   final supabase = Supabase.instance.client;
 
@@ -55,11 +56,19 @@ class _DetailScreenState extends State<DetailScreen> {
               .eq('user_id', userId)
               .eq('novel_id', widget.novel.id)
               .maybeSingle();
+      final viewRes =
+          await supabase
+              .from('novel_views')
+              .select('id')
+              .eq('user_id', userId)
+              .eq('novel_id', widget.novel.id)
+              .maybeSingle();
 
       if (mounted) {
         setState(() {
           _isBookmarked = bookmarkRes != null;
           _userHasRated = ratingRes != null;
+          _userHasViewed = viewRes != null;
         });
       }
     } catch (e) {
@@ -100,6 +109,7 @@ class _DetailScreenState extends State<DetailScreen> {
           'novel_id': widget.novel.id,
         });
       }
+
       if (mounted) {
         setState(() {
           _isBookmarked = !_isBookmarked;
@@ -136,23 +146,33 @@ class _DetailScreenState extends State<DetailScreen> {
     setState(() {
       _isLoadingReading = true;
     });
+    final userId = supabase.auth.currentUser?.id;
+
     try {
-      await supabase.rpc(
-        'increment_view_count',
-        params: {'novel_id_to_update': widget.novel.id},
-      );
+      if (userId != null && !_userHasViewed) {
+        await supabase.from('novel_views').insert({
+          'user_id': userId,
+          'novel_id': widget.novel.id,
+        });
+
+        if (mounted) {
+          setState(() {
+            _currentViewCount++;
+            _userHasViewed = true;
+          });
+        }
+      }
+
       final response =
           await supabase
               .from('novels')
               .select('*, categories(name)')
               .eq('id', widget.novel.id)
               .single();
+
       final completeNovel = Novel.fromMap(response);
 
       if (mounted) {
-        setState(() {
-          _currentViewCount++;
-        });
         if (completeNovel.isi != null && completeNovel.isi!.isNotEmpty) {
           Navigator.pushNamed(context, '/read', arguments: completeNovel);
         } else {
@@ -164,7 +184,11 @@ class _DetailScreenState extends State<DetailScreen> {
         }
       }
     } catch (e) {
-      if (mounted) {
+      if (e is PostgrestException && e.code == '23505') {
+        debugPrint('User has already viewed this novel.');
+        // Tetap lanjutkan membaca meskipun view sudah ada
+        _continueReading();
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal memuat isi cerita: ${e.toString()}')),
         );
@@ -175,6 +199,32 @@ class _DetailScreenState extends State<DetailScreen> {
           _isLoadingReading = false;
         });
       }
+    }
+  }
+
+  // Fungsi terpisah untuk melanjutkan membaca jika view sudah ada
+  void _continueReading() async {
+    try {
+      final response =
+          await supabase
+              .from('novels')
+              .select('*, categories(name)')
+              .eq('id', widget.novel.id)
+              .single();
+      final completeNovel = Novel.fromMap(response);
+      if (mounted &&
+          completeNovel.isi != null &&
+          completeNovel.isi!.isNotEmpty) {
+        Navigator.pushNamed(context, '/read', arguments: completeNovel);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Isi cerita untuk novel ini tidak tersedia.'),
+          ),
+        );
+      }
+    } catch (e) {
+      // Handle error
     }
   }
 
