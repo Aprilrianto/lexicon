@@ -123,7 +123,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // DIUBAH: Navigasi ke '/explore' sekarang diaktifkan
   void _onBottomNavTapped(int idx) {
     if (idx == 1) {
       Navigator.pushNamed(context, '/explore');
@@ -139,6 +138,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // DITAMBAHKAN: Properti ini mencegah layout naik saat keyboard muncul
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(

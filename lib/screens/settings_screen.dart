@@ -52,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _isNotificationOn = value;
                   });
                 },
-                activeColor: Colors.deepPurple,
+                activeColor: Colors.black,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16.0,
                   vertical: 4.0,

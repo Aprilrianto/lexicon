@@ -240,7 +240,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             bottom: 0,
             right: 0,
             child: CircleAvatar(
-              backgroundColor: Theme.of(context).primaryColor,
+              // DIUBAH: Warna diubah menjadi hitam
+              backgroundColor: Colors.black,
               child: IconButton(
                 icon: const Icon(Icons.edit, color: Colors.white),
                 onPressed: _pickImage,
